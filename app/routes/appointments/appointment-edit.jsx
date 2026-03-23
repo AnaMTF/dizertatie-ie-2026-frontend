@@ -1,3 +1,7 @@
 export default function AppointmentEdit() {
-  return <h1>Appointment Edit</h1>;
+  return (
+    <main>
+      <h1>Appointment Edit</h1>
+    </main>
+  );
 }

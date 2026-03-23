@@ -1,3 +1,7 @@
 export default function Appointments() {
-  return <h1>Appointments</h1>;
+  return (
+    <main>
+      <h1>Appointments</h1>
+    </main>
+  );
 }
