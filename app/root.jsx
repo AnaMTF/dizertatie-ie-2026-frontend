@@ -7,14 +7,8 @@ import {
   ScrollRestoration,
 } from "react-router";
 
-/* fonts needed for material ui */
-import "@fontsource/roboto/300.css";
-import "@fontsource/roboto/400.css";
-import "@fontsource/roboto/500.css";
-import "@fontsource/roboto/700.css";
-
-/* global styles */
 import "./app.css";
+import { Navbar } from "./components/navbar";
 
 export function Layout({ children }) {
   return (
@@ -35,7 +29,12 @@ export function Layout({ children }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  return (
+    <main>
+      <Navbar />
+      <Outlet />
+    </main>
+  );
 }
 
 export function ErrorBoundary({ error }) {
