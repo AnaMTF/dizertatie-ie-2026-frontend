@@ -31,7 +31,6 @@ export function Layout({ children }) {
 export default function App() {
   return (
     <main>
-      <Navbar />
       <Outlet />
     </main>
   );
