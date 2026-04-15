@@ -11,26 +11,44 @@ import {
   FaMedkit,
 } from "react-icons/fa";
 
-function LoggedInActions() {
+function LoggedInActions({ notificationCount }) {
+  function handleLogOut() {
+    // TODO: clear session and redirect to login
+  }
+
   return (
     <>
-      <Link to="/dashboard" className="tw:d-btn tw:d-btn-sm tw:d-btn-ghost">
+      <div className="tw:d-indicator">
+        {notificationCount > 0 && (
+          <span className="tw:d-indicator-item tw:d-indicator-start tw:d-badge tw:d-badge-info tw:d-badge-sm">
+            {notificationCount}
+          </span>
+        )}
+        <Link to="/profile" className="tw:d-btn tw:d-btn-sm tw:d-btn-primary">
+          <FaUserCircle />
+          Profile
+        </Link>
+      </div>
+      <Link to="/dashboard" className="tw:d-btn tw:d-btn-sm tw:d-btn-primary">
         <FaTachometerAlt />
         Dashboard
       </Link>
-      <Link to="/appointments" className="tw:d-btn tw:d-btn-sm tw:d-btn-ghost">
+      <Link
+        to="/appointments"
+        className="tw:d-btn tw:d-btn-sm tw:d-btn-primary"
+      >
         <FaCalendarAlt />
         Appointments
       </Link>
-      <Link to="/ai-scan" className="tw:d-btn tw:d-btn-sm tw:d-btn-ghost">
+      <Link to="/ai-scan" className="tw:d-btn tw:d-btn-sm tw:d-btn-primary">
         <FaRobot />
         AI Scan
       </Link>
-      <Link to="/profile" className="tw:d-btn tw:d-btn-sm tw:d-btn-ghost">
-        <FaUserCircle />
-        Profile
-      </Link>
-      <button className="tw:d-btn tw:d-btn-sm tw:d-btn-error">
+      <div className="tw:w-px tw:h-6 tw:bg-neutral-content/30" />
+      <button
+        onClick={handleLogOut}
+        className="tw:d-btn tw:d-btn-sm tw:d-btn-error"
+      >
         <FaSignOutAlt />
         Log Out
       </button>
@@ -39,21 +57,39 @@ function LoggedInActions() {
 }
 
 function LoggedOutActions() {
+  function handleLogin() {
+    // TODO: open login modal or handle login flow
+  }
+
+  function handleRegister() {
+    // TODO: open register modal or handle register flow
+  }
+
   return (
     <>
-      <Link to="/login" className="tw:d-btn tw:d-btn-sm tw:d-btn-ghost">
+      <button
+        onClick={handleLogin}
+        className="tw:d-btn tw:d-btn-sm tw:d-btn-ghost"
+      >
         <FaSignInAlt />
         Login
-      </Link>
-      <Link to="/register" className="tw:d-btn tw:d-btn-sm tw:d-btn-primary">
+      </button>
+      <button
+        onClick={handleRegister}
+        className="tw:d-btn tw:d-btn-sm tw:d-btn-primary"
+      >
         <FaUserPlus />
         Register
-      </Link>
+      </button>
     </>
   );
 }
 
-export function Navbar({ isLoggedIn = true }) {
+export function Navbar({ isLoggedIn = true, notificationCount = 10 }) {
+  function handleSearch() {
+    // TODO: implement search logic
+  }
+
   return (
     <div className="tw:d-navbar tw:bg-neutral tw:text-neutral-content tw:px-9">
       <div className="tw:d-navbar-start tw:gap-2">
@@ -68,13 +104,20 @@ export function Navbar({ isLoggedIn = true }) {
           placeholder="Search..."
           className="tw:d-input tw:d-input-sm tw:w-xl tw:bg-base-200 tw:text-base-content tw:placeholder-base-content/50"
         />
-        <button className="tw:d-btn tw:d-btn-sm tw:d-btn-accent">
+        <button
+          onClick={handleSearch}
+          className="tw:d-btn tw:d-btn-sm tw:d-btn-accent"
+        >
           <FaSearch />
           Search
         </button>
       </div>
       <div className="tw:d-navbar-end tw:gap-2">
-        {isLoggedIn ? <LoggedInActions /> : <LoggedOutActions />}
+        {isLoggedIn ? (
+          <LoggedInActions notificationCount={notificationCount} />
+        ) : (
+          <LoggedOutActions />
+        )}
       </div>
     </div>
   );
