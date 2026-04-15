@@ -11,40 +11,30 @@ import {
   FaMedkit,
 } from "react-icons/fa";
 
-function LoggedInActions({ notificationCount }) {
+function LoggedInActions() {
   function handleLogOut() {
     // TODO: clear session and redirect to login
   }
 
   return (
     <>
-      <div className="tw:d-indicator">
-        {notificationCount > 0 && (
-          <span className="tw:d-indicator-item tw:d-indicator-start tw:d-badge tw:d-badge-info tw:d-badge-sm">
-            {notificationCount}
-          </span>
-        )}
-        <Link to="/profile" className="tw:d-btn tw:d-btn-sm tw:d-btn-primary">
-          <FaUserCircle />
-          Profile
-        </Link>
-      </div>
-      <Link to="/dashboard" className="tw:d-btn tw:d-btn-sm tw:d-btn-primary">
-        <FaTachometerAlt />
-        Dashboard
-      </Link>
-      <Link
-        to="/appointments"
-        className="tw:d-btn tw:d-btn-sm tw:d-btn-primary"
-      >
-        <FaCalendarAlt />
-        Appointments
-      </Link>
       <Link to="/ai-scan" className="tw:d-btn tw:d-btn-sm tw:d-btn-primary">
         <FaRobot />
         AI Scan
       </Link>
+
+      <Link to="/appointments" className="tw:d-btn tw:d-btn-sm tw:d-btn-ghost">
+        <FaCalendarAlt />
+        Appointments
+      </Link>
+
+      <Link to="/profile" className="tw:d-btn tw:d-btn-sm tw:d-btn-ghost">
+        <FaUserCircle />
+        Profile
+      </Link>
+
       <div className="tw:w-px tw:h-6 tw:bg-neutral-content/30" />
+
       <button
         onClick={handleLogOut}
         className="tw:d-btn tw:d-btn-sm tw:d-btn-error"
@@ -74,6 +64,7 @@ function LoggedOutActions() {
         <FaSignInAlt />
         Login
       </button>
+
       <button
         onClick={handleRegister}
         className="tw:d-btn tw:d-btn-sm tw:d-btn-primary"
@@ -85,7 +76,7 @@ function LoggedOutActions() {
   );
 }
 
-export function Navbar({ isLoggedIn = true, notificationCount = 10 }) {
+export function Navbar({ isLoggedIn = true }) {
   function handleSearch() {
     // TODO: implement search logic
   }
@@ -112,12 +103,8 @@ export function Navbar({ isLoggedIn = true, notificationCount = 10 }) {
           Search
         </button>
       </div>
-      <div className="tw:d-navbar-end tw:gap-2">
-        {isLoggedIn ? (
-          <LoggedInActions notificationCount={notificationCount} />
-        ) : (
-          <LoggedOutActions />
-        )}
+      <div className="tw:d-navbar-end tw:gap-4">
+        {isLoggedIn ? <LoggedInActions /> : <LoggedOutActions />}
       </div>
     </div>
   );
