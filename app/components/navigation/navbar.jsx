@@ -7,7 +7,6 @@ import {
   FaUserCircle,
   FaCalendarAlt,
   FaRobot,
-  FaTachometerAlt,
   FaMedkit,
 } from "react-icons/fa";
 
