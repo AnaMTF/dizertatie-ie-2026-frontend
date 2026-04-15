@@ -14,7 +14,7 @@ export function Layout({ children }) {
       </head>
       <body>
         <Navbar />
-        {children}
+        <main className="tw:px-9 tw:pt-6">{children}</main>
         <ScrollRestoration />
         <Scripts />
       </body>
