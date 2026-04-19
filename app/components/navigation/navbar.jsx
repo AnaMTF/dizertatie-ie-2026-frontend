@@ -1,14 +1,16 @@
-import { Link } from "react-router";
 import {
+  FaCalendarAlt,
+  FaMedkit,
+  FaRobot,
   FaSearch,
   FaSignInAlt,
   FaSignOutAlt,
-  FaUserPlus,
   FaUserCircle,
-  FaCalendarAlt,
-  FaRobot,
-  FaMedkit,
+  FaUserPlus,
 } from "react-icons/fa";
+import { Link } from "react-router";
+import Login from "../authentication/login";
+import Register from "../authentication/register";
 
 function LoggedInActions() {
   function handleLogOut() {
@@ -47,11 +49,11 @@ function LoggedInActions() {
 
 function LoggedOutActions() {
   function handleLogin() {
-    // TODO: open login modal or handle login flow
+    document.getElementById("login-modal").showModal();
   }
 
   function handleRegister() {
-    // TODO: open register modal or handle register flow
+    document.getElementById("register-modal").showModal();
   }
 
   return (
@@ -71,11 +73,13 @@ function LoggedOutActions() {
         <FaUserPlus />
         Register
       </button>
+      <Login />
+      <Register />
     </>
   );
 }
 
-export function Navbar({ isLoggedIn = true }) {
+export function Navbar({ isLoggedIn = false }) {
   function handleSearch() {
     // TODO: implement search logic
   }
@@ -92,7 +96,7 @@ export function Navbar({ isLoggedIn = true }) {
         <input
           type="text"
           placeholder="Search..."
-          className="tw:d-input tw:d-input-sm tw:w-xl tw:bg-base-200 tw:text-base-content tw:placeholder-base-content/50"
+          className="tw:d-input tw:d-input-accent tw:d-input-sm tw:w-xl tw:bg-base-200 tw:text-base-content tw:placeholder-base-content/50"
         />
         <button
           onClick={handleSearch}
