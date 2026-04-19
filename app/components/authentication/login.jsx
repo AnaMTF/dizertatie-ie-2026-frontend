@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { FaFacebook, FaGoogle } from "react-icons/fa";
+import isEmail from "validator/lib/isEmail";
 
 function Field({ label, type, name, value, onChange }) {
   return (
@@ -36,6 +37,8 @@ function LoginForm() {
     // TODO: implement login
   }
 
+  const isValid = isEmail(form.email) && form.password.length >= 8;
+
   return (
     <div className="tw:flex tw:flex-col tw:p-10 tw:bg-base-100 tw:text-base-content tw:h-full">
       <div className="tw:flex tw:flex-col tw:gap-4 tw:flex-1 tw:justify-end">
@@ -71,13 +74,28 @@ function LoginForm() {
           value={form.password}
           onChange={handleChange}
         />
-        <button
-          type="button"
-          className="tw:d-btn tw:d-btn-primary tw:mt-auto"
-          onClick={handleLogin}
+        <div
+          className={[
+            "tw:mt-auto",
+            !isValid && "tw:d-tooltip tw:d-tooltip-warning",
+          ]
+            .filter(Boolean)
+            .join(" ")}
         >
-          Login
-        </button>
+          {!isValid && (
+            <div className="tw:d-tooltip-content">
+              <strong>Please enter a valid email and password</strong>
+            </div>
+          )}
+          <button
+            type="button"
+            className="tw:d-btn tw:d-btn-primary tw:w-full"
+            onClick={handleLogin}
+            disabled={!isValid}
+          >
+            Login
+          </button>
+        </div>
       </form>
     </div>
   );

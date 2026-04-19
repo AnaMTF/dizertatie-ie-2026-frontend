@@ -1,5 +1,19 @@
 import { useState } from "react";
 import { FaFacebook, FaGoogle } from "react-icons/fa";
+import isEmail from "validator/lib/isEmail";
+import isNumeric from "validator/lib/isNumeric";
+
+function isAtLeast18(dateStr) {
+  if (!dateStr) return false;
+  const dob = new Date(dateStr);
+  const today = new Date();
+  const age = today.getFullYear() - dob.getFullYear();
+  const m = today.getMonth() - dob.getMonth();
+  return (
+    age > 18 ||
+    (age === 18 && (m > 0 || (m === 0 && today.getDate() >= dob.getDate())))
+  );
+}
 
 function Field({ label, type, name, value, onChange }) {
   return (
@@ -17,7 +31,13 @@ function Field({ label, type, name, value, onChange }) {
   );
 }
 
-function StepActions({ onNext, onBack, nextLabel = "Continue" }) {
+function StepActions({
+  onNext,
+  onBack,
+  nextLabel = "Continue",
+  disabled = false,
+  tooltipMessage,
+}) {
   return (
     <div className="tw:flex tw:gap-2 tw:mt-auto">
       {onBack && (
@@ -29,13 +49,28 @@ function StepActions({ onNext, onBack, nextLabel = "Continue" }) {
           Back
         </button>
       )}
-      <button
-        type="button"
-        className="tw:d-btn tw:d-btn-primary tw:flex-1"
-        onClick={onNext}
+      <div
+        className={[
+          "tw:flex-1",
+          disabled && "tw:d-tooltip tw:d-tooltip-warning",
+        ]
+          .filter(Boolean)
+          .join(" ")}
       >
-        {nextLabel}
-      </button>
+        {disabled && tooltipMessage && (
+          <div className="tw:d-tooltip-content">
+            <strong>{tooltipMessage}</strong>
+          </div>
+        )}
+        <button
+          type="button"
+          className="tw:d-btn tw:d-btn-primary tw:w-full"
+          onClick={onNext}
+          disabled={disabled}
+        >
+          {nextLabel}
+        </button>
+      </div>
     </div>
   );
 }
@@ -48,6 +83,8 @@ function StepEmail({ onNext, values, onChange }) {
   function handleFacebookLogin() {
     // TODO: implement Facebook login
   }
+
+  const isValid = isEmail(values.email);
 
   return (
     <>
@@ -72,13 +109,22 @@ function StepEmail({ onNext, values, onChange }) {
           value={values.email}
           onChange={onChange}
         />
-        <StepActions onNext={onNext} />
+        <StepActions
+          onNext={onNext}
+          disabled={!isValid}
+          tooltipMessage="Please enter a valid email address"
+        />
       </form>
     </>
   );
 }
 
 function StepPassword({ onNext, onBack, values, onChange }) {
+  const isValid =
+    values.password.length >= 8 &&
+    values.password.length <= 128 &&
+    values.password === values.confirmPassword;
+
   return (
     <form className="tw:flex tw:flex-col tw:gap-4 tw:h-full">
       <h2 className="tw:text-2xl tw:font-bold">Set your password</h2>
@@ -96,12 +142,26 @@ function StepPassword({ onNext, onBack, values, onChange }) {
         value={values.confirmPassword}
         onChange={onChange}
       />
-      <StepActions onNext={onNext} onBack={onBack} />
+      <StepActions
+        onNext={onNext}
+        onBack={onBack}
+        disabled={!isValid}
+        tooltipMessage="Passwords must match and be at least 8 characters long"
+      />
     </form>
   );
 }
 
 function StepPersonalInfo({ onNext, onBack, values, onChange }) {
+  const isValid =
+    values.firstName.length >= 1 &&
+    values.firstName.length <= 100 &&
+    values.lastName.length >= 1 &&
+    values.lastName.length <= 100 &&
+    isAtLeast18(values.dateOfBirth) &&
+    isNumeric(values.height) &&
+    isNumeric(values.weight);
+
   return (
     <form className="tw:flex tw:flex-col tw:gap-4 tw:h-full">
       <h2 className="tw:text-2xl tw:font-bold">Personal info</h2>
@@ -144,7 +204,12 @@ function StepPersonalInfo({ onNext, onBack, values, onChange }) {
           onChange={onChange}
         />
       </div>
-      <StepActions onNext={onNext} onBack={onBack} />
+      <StepActions
+        onNext={onNext}
+        onBack={onBack}
+        disabled={!isValid}
+        tooltipMessage="Please fill in all fields. You must be at least 18 years old."
+      />
     </form>
   );
 }
