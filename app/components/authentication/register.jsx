@@ -1,6 +1,5 @@
 import { useState } from "react";
 import {
-  FaExclamationTriangle,
   FaFacebook,
   FaGoogle,
   FaLock,
@@ -10,6 +9,7 @@ import {
 } from "react-icons/fa";
 import isEmail from "validator/lib/isEmail";
 import isNumeric from "validator/lib/isNumeric";
+import StepActions from "../common/step-actions";
 
 function isAtLeast18(dateStr) {
   if (!dateStr) return false;
@@ -36,44 +36,6 @@ function Field({ label, type, name, value, onChange }) {
       />
       <span>{label}</span>
     </label>
-  );
-}
-
-function StepActions({
-  onNext,
-  onBack,
-  nextLabel = "Continue",
-  disabled = false,
-  tooltipMessage,
-}) {
-  return (
-    <div className="mt-auto flex gap-2">
-      {onBack && (
-        <button type="button" className="btn btn-ghost flex-1" onClick={onBack}>
-          Back
-        </button>
-      )}
-      <div
-        className={["flex-1", disabled && "tooltip tooltip-warning"]
-          .filter(Boolean)
-          .join(" ")}
-      >
-        {disabled && tooltipMessage && (
-          <div className="tooltip-content flex items-center gap-2">
-            <FaExclamationTriangle />
-            <strong>{tooltipMessage}</strong>
-          </div>
-        )}
-        <button
-          type="button"
-          className="btn btn-primary w-full"
-          onClick={onNext}
-          disabled={disabled}
-        >
-          {nextLabel}
-        </button>
-      </div>
-    </div>
   );
 }
 
