@@ -1,5 +1,10 @@
 import { useState } from "react";
-import { FaFacebook, FaGoogle } from "react-icons/fa";
+import {
+  FaExclamationTriangle,
+  FaFacebook,
+  FaGoogle,
+  FaSignInAlt,
+} from "react-icons/fa";
 import isEmail from "validator/lib/isEmail";
 
 function Field({ label, type, name, value, onChange }) {
@@ -42,7 +47,9 @@ function LoginForm() {
   return (
     <div className="tw:flex tw:flex-col tw:p-10 tw:bg-base-100 tw:text-base-content tw:h-full">
       <div className="tw:flex tw:flex-col tw:gap-4 tw:flex-1 tw:justify-end">
-        <h2 className="tw:text-2xl tw:font-bold">Welcome back</h2>
+        <h2 className="tw:text-2xl tw:font-bold tw:flex tw:items-center tw:gap-2">
+          <FaSignInAlt /> Welcome back
+        </h2>
         <button
           className="tw:d-btn tw:d-btn-outline"
           onClick={handleGoogleLogin}
@@ -83,7 +90,8 @@ function LoginForm() {
             .join(" ")}
         >
           {!isValid && (
-            <div className="tw:d-tooltip-content">
+            <div className="tw:d-tooltip-content tw:flex tw:items-center tw:gap-2">
+              <FaExclamationTriangle />
               <strong>Please enter a valid email and password</strong>
             </div>
           )}

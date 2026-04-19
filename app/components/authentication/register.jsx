@@ -1,5 +1,13 @@
 import { useState } from "react";
-import { FaFacebook, FaGoogle } from "react-icons/fa";
+import {
+  FaExclamationTriangle,
+  FaFacebook,
+  FaGoogle,
+  FaLock,
+  FaNotesMedical,
+  FaUser,
+  FaUserPlus,
+} from "react-icons/fa";
 import isEmail from "validator/lib/isEmail";
 import isNumeric from "validator/lib/isNumeric";
 
@@ -58,7 +66,8 @@ function StepActions({
           .join(" ")}
       >
         {disabled && tooltipMessage && (
-          <div className="tw:d-tooltip-content">
+          <div className="tw:d-tooltip-content tw:flex tw:items-center tw:gap-2">
+            <FaExclamationTriangle />
             <strong>{tooltipMessage}</strong>
           </div>
         )}
@@ -88,7 +97,9 @@ function StepEmail({ onNext, values, onChange }) {
 
   return (
     <>
-      <h2 className="tw:text-2xl tw:font-bold">Create an account</h2>
+      <h2 className="tw:text-2xl tw:font-bold tw:flex tw:items-center tw:gap-2">
+        <FaUserPlus /> Create an account
+      </h2>
       <button className="tw:d-btn tw:d-btn-outline" onClick={handleGoogleLogin}>
         <FaGoogle /> Continue with Google
       </button>
@@ -127,7 +138,9 @@ function StepPassword({ onNext, onBack, values, onChange }) {
 
   return (
     <form className="tw:flex tw:flex-col tw:gap-4 tw:h-full">
-      <h2 className="tw:text-2xl tw:font-bold">Set your password</h2>
+      <h2 className="tw:text-2xl tw:font-bold tw:flex tw:items-center tw:gap-2">
+        <FaLock /> Set your password
+      </h2>
       <Field
         label="Password"
         type="password"
@@ -164,7 +177,9 @@ function StepPersonalInfo({ onNext, onBack, values, onChange }) {
 
   return (
     <form className="tw:flex tw:flex-col tw:gap-4 tw:h-full">
-      <h2 className="tw:text-2xl tw:font-bold">Personal info</h2>
+      <h2 className="tw:text-2xl tw:font-bold tw:flex tw:items-center tw:gap-2">
+        <FaUser /> Personal info
+      </h2>
       <div className="tw:grid tw:grid-cols-2 tw:gap-4">
         <Field
           label="First Name"
@@ -221,7 +236,9 @@ function StepAdditionalInfo({ onBack, values, onChange }) {
 
   return (
     <form className="tw:flex tw:flex-col tw:gap-4 tw:h-full">
-      <h2 className="tw:text-2xl tw:font-bold">Additional information</h2>
+      <h2 className="tw:text-2xl tw:font-bold tw:flex tw:items-center tw:gap-2">
+        <FaNotesMedical /> Additional information
+      </h2>
       <p className="tw:text-sm tw:text-base-content/60">
         Tell us anything else you&apos;d like your doctor to know.
       </p>
