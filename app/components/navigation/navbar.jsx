@@ -10,11 +10,12 @@ import {
 } from "react-icons/fa";
 import { Link } from "react-router";
 import Login from "../authentication/login";
+import Logout from "../authentication/logout";
 import Register from "../authentication/register";
 
 function LoggedInActions() {
   function handleLogOut() {
-    // TODO: clear session and redirect to login
+    document.getElementById("logout-modal").showModal();
   }
 
   return (
@@ -43,6 +44,7 @@ function LoggedInActions() {
         <FaSignOutAlt />
         Log Out
       </button>
+      <Logout />
     </>
   );
 }
@@ -79,7 +81,7 @@ function LoggedOutActions() {
   );
 }
 
-export function Navbar({ isLoggedIn = false }) {
+export function Navbar({ isLoggedIn = true }) {
   function handleSearch() {
     // TODO: implement search logic
   }
