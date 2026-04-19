@@ -20,27 +20,24 @@ function LoggedInActions() {
 
   return (
     <>
-      <Link to="/ai-scan" className="tw:d-btn tw:d-btn-sm tw:d-btn-primary">
+      <Link to="/ai-scan" className="btn btn-sm btn-primary">
         <FaRobot />
         AI Scan
       </Link>
 
-      <Link to="/appointments" className="tw:d-btn tw:d-btn-sm tw:d-btn-ghost">
+      <Link to="/appointments" className="btn btn-sm btn-ghost">
         <FaCalendarAlt />
         Appointments
       </Link>
 
-      <Link to="/profile" className="tw:d-btn tw:d-btn-sm tw:d-btn-ghost">
+      <Link to="/profile" className="btn btn-sm btn-ghost">
         <FaUserCircle />
         Profile
       </Link>
 
-      <div className="tw:w-px tw:h-6 tw:bg-neutral-content/30" />
+      <div className="w-px h-6 bg-neutral-content/30" />
 
-      <button
-        onClick={handleLogOut}
-        className="tw:d-btn tw:d-btn-sm tw:d-btn-error"
-      >
+      <button onClick={handleLogOut} className="btn btn-sm btn-error">
         <FaSignOutAlt />
         Log Out
       </button>
@@ -60,18 +57,12 @@ function LoggedOutActions() {
 
   return (
     <>
-      <button
-        onClick={handleLogin}
-        className="tw:d-btn tw:d-btn-sm tw:d-btn-ghost"
-      >
+      <button onClick={handleLogin} className="btn btn-sm btn-ghost">
         <FaSignInAlt />
         Login
       </button>
 
-      <button
-        onClick={handleRegister}
-        className="tw:d-btn tw:d-btn-sm tw:d-btn-primary"
-      >
+      <button onClick={handleRegister} className="btn btn-sm btn-primary">
         <FaUserPlus />
         Register
       </button>
@@ -87,28 +78,25 @@ export function Navbar({ isLoggedIn = true }) {
   }
 
   return (
-    <div className="tw:d-navbar tw:bg-neutral tw:text-neutral-content tw:px-9">
-      <div className="tw:d-navbar-start tw:gap-2">
-        <Link to="/" className="tw:flex tw:items-center tw:gap-2">
-          <FaMedkit className="tw:text-3xl" />
-          <div className="tw:text-2xl tw:font-semibold">Dizertatie IE 2026</div>
+    <div className="navbar bg-neutral text-neutral-content px-9">
+      <div className="navbar-start gap-2">
+        <Link to="/" className="flex items-center gap-2">
+          <FaMedkit className="text-3xl" />
+          <div className="text-2xl font-semibold">Dizertatie IE 2026</div>
         </Link>
       </div>
-      <div className="tw:d-navbar-center tw:flex tw:gap-2">
+      <div className="navbar-center flex gap-2">
         <input
           type="text"
           placeholder="Search..."
-          className="tw:d-input tw:d-input-accent tw:d-input-sm tw:w-xl tw:bg-base-200 tw:text-base-content tw:placeholder-base-content/50"
+          className="input input-accent input-sm w-xl bg-base-200 text-base-content placeholder-base-content/50"
         />
-        <button
-          onClick={handleSearch}
-          className="tw:d-btn tw:d-btn-sm tw:d-btn-accent"
-        >
+        <button onClick={handleSearch} className="btn btn-sm btn-accent">
           <FaSearch />
           Search
         </button>
       </div>
-      <div className="tw:d-navbar-end tw:gap-4">
+      <div className="navbar-end gap-4">
         {isLoggedIn ? <LoggedInActions /> : <LoggedOutActions />}
       </div>
     </div>

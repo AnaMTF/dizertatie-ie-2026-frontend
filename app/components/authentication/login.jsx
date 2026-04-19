@@ -9,12 +9,12 @@ import isEmail from "validator/lib/isEmail";
 
 function Field({ label, type, name, value, onChange }) {
   return (
-    <label className="tw:d-floating-label">
+    <label className="floating-label">
       <input
         type={type}
         name={name}
         placeholder={label}
-        className="tw:d-input tw:w-full"
+        className="input w-full"
         value={value}
         onChange={onChange}
       />
@@ -45,28 +45,22 @@ function LoginForm() {
   const isValid = isEmail(form.email) && form.password.length >= 8;
 
   return (
-    <div className="tw:flex tw:flex-col tw:p-10 tw:bg-base-100 tw:text-base-content tw:h-full">
-      <div className="tw:flex tw:flex-col tw:gap-4 tw:flex-1 tw:justify-end">
-        <h2 className="tw:text-2xl tw:font-bold tw:flex tw:items-center tw:gap-2">
+    <div className="flex flex-col p-10 bg-base-100 text-base-content h-full">
+      <div className="flex flex-col gap-4 flex-1 justify-end">
+        <h2 className="text-2xl font-bold flex items-center gap-2">
           <FaSignInAlt /> Welcome back
         </h2>
-        <button
-          className="tw:d-btn tw:d-btn-outline"
-          onClick={handleGoogleLogin}
-        >
+        <button className="btn btn-outline" onClick={handleGoogleLogin}>
           <FaGoogle /> Continue with Google
         </button>
-        <button
-          className="tw:d-btn tw:d-btn-outline"
-          onClick={handleFacebookLogin}
-        >
+        <button className="btn btn-outline" onClick={handleFacebookLogin}>
           <FaFacebook /> Continue with Facebook
         </button>
       </div>
 
-      <div className="tw:d-divider">or</div>
+      <div className="divider">or</div>
 
-      <form className="tw:flex tw:flex-col tw:gap-4 tw:flex-1">
+      <form className="flex flex-col gap-4 flex-1">
         <Field
           label="Email"
           type="email"
@@ -82,22 +76,19 @@ function LoginForm() {
           onChange={handleChange}
         />
         <div
-          className={[
-            "tw:mt-auto",
-            !isValid && "tw:d-tooltip tw:d-tooltip-warning",
-          ]
+          className={["mt-auto", !isValid && "tooltip tooltip-warning"]
             .filter(Boolean)
             .join(" ")}
         >
           {!isValid && (
-            <div className="tw:d-tooltip-content tw:flex tw:items-center tw:gap-2">
+            <div className="tooltip-content flex items-center gap-2">
               <FaExclamationTriangle />
               <strong>Please enter a valid email and password</strong>
             </div>
           )}
           <button
             type="button"
-            className="tw:d-btn tw:d-btn-primary tw:w-full"
+            className="btn btn-primary w-full"
             onClick={handleLogin}
             disabled={!isValid}
           >
@@ -111,11 +102,11 @@ function LoginForm() {
 
 function LoginPhoto() {
   return (
-    <div className="tw:bg-primary">
+    <div className="bg-primary">
       <img
         src="/doctor-on-left.jpg"
         alt="Doctor"
-        className="tw:w-full tw:h-full tw:object-cover tw:object-left"
+        className="w-full h-full object-cover object-left"
       />
     </div>
   );
@@ -123,14 +114,14 @@ function LoginPhoto() {
 
 export default function Login() {
   return (
-    <dialog id="login-modal" className="tw:d-modal">
-      <div className="tw:d-modal-box tw:max-w-5xl tw:p-0 tw:overflow-hidden tw:relative">
+    <dialog id="login-modal" className="modal">
+      <div className="modal-box max-w-5xl p-0 overflow-hidden relative">
         <form method="dialog">
-          <button className="tw:d-btn tw:d-btn-sm tw:d-btn-circle tw:d-btn-ghost tw:absolute tw:right-2 tw:top-2">
+          <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
             ✕
           </button>
         </form>
-        <div className="tw:grid tw:grid-cols-2 tw:min-h-160">
+        <div className="grid grid-cols-2 min-h-160">
           <LoginPhoto />
           <LoginForm />
         </div>

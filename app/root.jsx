@@ -12,9 +12,9 @@ export function Layout({ children }) {
         <Meta />
         <Links />
       </head>
-      <body>
+      <body className="h-screen flex flex-col overflow-hidden">
         <Navbar />
-        <main className="tw:px-9 tw:pt-6">{children}</main>
+        <main className="px-9 pt-6 flex-1 overflow-hidden">{children}</main>
         <ScrollRestoration />
         <Scripts />
       </body>

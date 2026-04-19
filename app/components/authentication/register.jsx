@@ -25,12 +25,12 @@ function isAtLeast18(dateStr) {
 
 function Field({ label, type, name, value, onChange }) {
   return (
-    <label className="tw:d-floating-label">
+    <label className="floating-label">
       <input
         type={type}
         name={name}
         placeholder={label}
-        className="tw:d-input tw:w-full"
+        className="input w-full"
         value={value}
         onChange={onChange}
       />
@@ -47,33 +47,26 @@ function StepActions({
   tooltipMessage,
 }) {
   return (
-    <div className="tw:flex tw:gap-2 tw:mt-auto">
+    <div className="flex gap-2 mt-auto">
       {onBack && (
-        <button
-          type="button"
-          className="tw:d-btn tw:d-btn-ghost tw:flex-1"
-          onClick={onBack}
-        >
+        <button type="button" className="btn btn-ghost flex-1" onClick={onBack}>
           Back
         </button>
       )}
       <div
-        className={[
-          "tw:flex-1",
-          disabled && "tw:d-tooltip tw:d-tooltip-warning",
-        ]
+        className={["flex-1", disabled && "tooltip tooltip-warning"]
           .filter(Boolean)
           .join(" ")}
       >
         {disabled && tooltipMessage && (
-          <div className="tw:d-tooltip-content tw:flex tw:items-center tw:gap-2">
+          <div className="tooltip-content flex items-center gap-2">
             <FaExclamationTriangle />
             <strong>{tooltipMessage}</strong>
           </div>
         )}
         <button
           type="button"
-          className="tw:d-btn tw:d-btn-primary tw:w-full"
+          className="btn btn-primary w-full"
           onClick={onNext}
           disabled={disabled}
         >
@@ -97,22 +90,19 @@ function StepEmail({ onNext, values, onChange }) {
 
   return (
     <>
-      <h2 className="tw:text-2xl tw:font-bold tw:flex tw:items-center tw:gap-2">
+      <h2 className="text-2xl font-bold flex items-center gap-2">
         <FaUserPlus /> Create an account
       </h2>
-      <button className="tw:d-btn tw:d-btn-outline" onClick={handleGoogleLogin}>
+      <button className="btn btn-outline" onClick={handleGoogleLogin}>
         <FaGoogle /> Continue with Google
       </button>
-      <button
-        className="tw:d-btn tw:d-btn-outline"
-        onClick={handleFacebookLogin}
-      >
+      <button className="btn btn-outline" onClick={handleFacebookLogin}>
         <FaFacebook /> Continue with Facebook
       </button>
 
-      <div className="tw:d-divider">or</div>
+      <div className="divider">or</div>
 
-      <form className="tw:flex tw:flex-col tw:gap-4 tw:flex-1">
+      <form className="flex flex-col gap-4 flex-1">
         <Field
           label="Email"
           type="email"
@@ -137,8 +127,8 @@ function StepPassword({ onNext, onBack, values, onChange }) {
     values.password === values.confirmPassword;
 
   return (
-    <form className="tw:flex tw:flex-col tw:gap-4 tw:h-full">
-      <h2 className="tw:text-2xl tw:font-bold tw:flex tw:items-center tw:gap-2">
+    <form className="flex flex-col gap-4 h-full">
+      <h2 className="text-2xl font-bold flex items-center gap-2">
         <FaLock /> Set your password
       </h2>
       <Field
@@ -176,11 +166,11 @@ function StepPersonalInfo({ onNext, onBack, values, onChange }) {
     isNumeric(values.weight);
 
   return (
-    <form className="tw:flex tw:flex-col tw:gap-4 tw:h-full">
-      <h2 className="tw:text-2xl tw:font-bold tw:flex tw:items-center tw:gap-2">
+    <form className="flex flex-col gap-4 h-full">
+      <h2 className="text-2xl font-bold flex items-center gap-2">
         <FaUser /> Personal info
       </h2>
-      <div className="tw:grid tw:grid-cols-2 tw:gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <Field
           label="First Name"
           type="text"
@@ -203,7 +193,7 @@ function StepPersonalInfo({ onNext, onBack, values, onChange }) {
         value={values.dateOfBirth}
         onChange={onChange}
       />
-      <div className="tw:grid tw:grid-cols-2 tw:gap-4">
+      <div className="grid grid-cols-2 gap-4">
         <Field
           label="Height (cm)"
           type="number"
@@ -235,15 +225,15 @@ function StepAdditionalInfo({ onBack, values, onChange }) {
   }
 
   return (
-    <form className="tw:flex tw:flex-col tw:gap-4 tw:h-full">
-      <h2 className="tw:text-2xl tw:font-bold tw:flex tw:items-center tw:gap-2">
+    <form className="flex flex-col gap-4 h-full">
+      <h2 className="text-2xl font-bold flex items-center gap-2">
         <FaNotesMedical /> Additional information
       </h2>
-      <p className="tw:text-sm tw:text-base-content/60">
+      <p className="text-sm text-base-content/60">
         Tell us anything else you&apos;d like your doctor to know.
       </p>
       <textarea
-        className="tw:d-textarea tw:w-full tw:flex-1"
+        className="textarea w-full flex-1"
         name="additionalInfo"
         placeholder="Type here..."
         value={values.additionalInfo}
@@ -285,7 +275,7 @@ function RegisterForm() {
   }
 
   return (
-    <div className="tw:flex tw:flex-col tw:p-10 tw:gap-4 tw:bg-base-100 tw:text-base-content tw:h-full">
+    <div className="flex flex-col p-10 gap-4 bg-base-100 text-base-content h-full">
       {step === 0 && (
         <StepEmail onNext={nextStep} values={form} onChange={handleChange} />
       )}
@@ -318,11 +308,11 @@ function RegisterForm() {
 
 function RegisterPhoto() {
   return (
-    <div className="tw:bg-primary">
+    <div className="bg-primary">
       <img
         src="/doctor-on-right.jpg"
         alt="Doctor"
-        className="tw:w-full tw:h-full tw:object-cover tw:object-right"
+        className="w-full h-full object-cover object-right"
       />
     </div>
   );
@@ -330,14 +320,14 @@ function RegisterPhoto() {
 
 export default function Register() {
   return (
-    <dialog id="register-modal" className="tw:d-modal">
-      <div className="tw:d-modal-box tw:max-w-5xl tw:p-0 tw:overflow-hidden tw:relative">
+    <dialog id="register-modal" className="modal">
+      <div className="modal-box max-w-5xl p-0 overflow-hidden relative">
         <form method="dialog">
-          <button className="tw:d-btn tw:d-btn-sm tw:d-btn-circle tw:d-btn-ghost tw:absolute tw:right-2 tw:top-2">
+          <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
             ✕
           </button>
         </form>
-        <div className="tw:grid tw:grid-cols-2 tw:min-h-160">
+        <div className="grid grid-cols-2 min-h-160">
           <RegisterForm />
           <RegisterPhoto />
         </div>

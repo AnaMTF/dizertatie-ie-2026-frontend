@@ -1,9 +1,5 @@
-@import "tailwindcss" prefix(tw);
-@plugin "@tailwindcss/typography" {
-  prefix: "tw-";
-}
-
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
 @plugin "daisyui" {
   themes: light --default;
-  prefix: "d-";
 }
