@@ -8,7 +8,7 @@ export default function Logout() {
   return (
     <dialog id="logout-modal" className="modal">
       <div className="modal-box bg-base-100 text-base-content">
-        <h2 className="text-xl font-bold flex items-center gap-2">
+        <h2 className="flex items-center gap-2 text-xl font-bold">
           <FaSignOutAlt className="text-error" />
           Log out
         </h2>

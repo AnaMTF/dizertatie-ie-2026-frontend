@@ -35,7 +35,7 @@ function LoggedInActions() {
         Profile
       </Link>
 
-      <div className="w-px h-6 bg-neutral-content/30" />
+      <div className="bg-neutral-content/30 h-6 w-px" />
 
       <button onClick={handleLogOut} className="btn btn-sm btn-error">
         <FaSignOutAlt />
@@ -89,7 +89,7 @@ export function Navbar({ isLoggedIn = true }) {
         <input
           type="text"
           placeholder="Search..."
-          className="input input-accent input-sm w-xl bg-base-200 text-base-content placeholder-base-content/50"
+          className="input input-accent input-sm bg-base-200 text-base-content placeholder-base-content/50 w-xl"
         />
         <button onClick={handleSearch} className="btn btn-sm btn-accent">
           <FaSearch />

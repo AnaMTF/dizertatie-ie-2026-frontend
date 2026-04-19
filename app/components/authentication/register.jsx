@@ -47,7 +47,7 @@ function StepActions({
   tooltipMessage,
 }) {
   return (
-    <div className="flex gap-2 mt-auto">
+    <div className="mt-auto flex gap-2">
       {onBack && (
         <button type="button" className="btn btn-ghost flex-1" onClick={onBack}>
           Back
@@ -90,7 +90,7 @@ function StepEmail({ onNext, values, onChange }) {
 
   return (
     <>
-      <h2 className="text-2xl font-bold flex items-center gap-2">
+      <h2 className="flex items-center gap-2 text-2xl font-bold">
         <FaUserPlus /> Create an account
       </h2>
       <button className="btn btn-outline" onClick={handleGoogleLogin}>
@@ -102,7 +102,7 @@ function StepEmail({ onNext, values, onChange }) {
 
       <div className="divider">or</div>
 
-      <form className="flex flex-col gap-4 flex-1">
+      <form className="flex flex-1 flex-col gap-4">
         <Field
           label="Email"
           type="email"
@@ -127,8 +127,8 @@ function StepPassword({ onNext, onBack, values, onChange }) {
     values.password === values.confirmPassword;
 
   return (
-    <form className="flex flex-col gap-4 h-full">
-      <h2 className="text-2xl font-bold flex items-center gap-2">
+    <form className="flex h-full flex-col gap-4">
+      <h2 className="flex items-center gap-2 text-2xl font-bold">
         <FaLock /> Set your password
       </h2>
       <Field
@@ -166,8 +166,8 @@ function StepPersonalInfo({ onNext, onBack, values, onChange }) {
     isNumeric(values.weight);
 
   return (
-    <form className="flex flex-col gap-4 h-full">
-      <h2 className="text-2xl font-bold flex items-center gap-2">
+    <form className="flex h-full flex-col gap-4">
+      <h2 className="flex items-center gap-2 text-2xl font-bold">
         <FaUser /> Personal info
       </h2>
       <div className="grid grid-cols-2 gap-4">
@@ -225,11 +225,11 @@ function StepAdditionalInfo({ onBack, values, onChange }) {
   }
 
   return (
-    <form className="flex flex-col gap-4 h-full">
-      <h2 className="text-2xl font-bold flex items-center gap-2">
+    <form className="flex h-full flex-col gap-4">
+      <h2 className="flex items-center gap-2 text-2xl font-bold">
         <FaNotesMedical /> Additional information
       </h2>
-      <p className="text-sm text-base-content/60">
+      <p className="text-base-content/60 text-sm">
         Tell us anything else you&apos;d like your doctor to know.
       </p>
       <textarea
@@ -275,7 +275,7 @@ function RegisterForm() {
   }
 
   return (
-    <div className="flex flex-col p-10 gap-4 bg-base-100 text-base-content h-full">
+    <div className="bg-base-100 text-base-content flex h-full flex-col gap-4 p-10">
       {step === 0 && (
         <StepEmail onNext={nextStep} values={form} onChange={handleChange} />
       )}
@@ -312,7 +312,7 @@ function RegisterPhoto() {
       <img
         src="/doctor-on-right.jpg"
         alt="Doctor"
-        className="w-full h-full object-cover object-right"
+        className="h-full w-full object-cover object-right"
       />
     </div>
   );
@@ -321,13 +321,13 @@ function RegisterPhoto() {
 export default function Register() {
   return (
     <dialog id="register-modal" className="modal">
-      <div className="modal-box max-w-5xl p-0 overflow-hidden relative">
+      <div className="modal-box relative max-w-5xl overflow-hidden p-0">
         <form method="dialog">
-          <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+          <button className="btn btn-sm btn-circle btn-ghost absolute top-2 right-2">
             ✕
           </button>
         </form>
-        <div className="grid grid-cols-2 min-h-160">
+        <div className="grid min-h-160 grid-cols-2">
           <RegisterForm />
           <RegisterPhoto />
         </div>

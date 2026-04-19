@@ -45,9 +45,9 @@ function LoginForm() {
   const isValid = isEmail(form.email) && form.password.length >= 8;
 
   return (
-    <div className="flex flex-col p-10 bg-base-100 text-base-content h-full">
-      <div className="flex flex-col gap-4 flex-1 justify-end">
-        <h2 className="text-2xl font-bold flex items-center gap-2">
+    <div className="bg-base-100 text-base-content flex h-full flex-col p-10">
+      <div className="flex flex-1 flex-col justify-end gap-4">
+        <h2 className="flex items-center gap-2 text-2xl font-bold">
           <FaSignInAlt /> Welcome back
         </h2>
         <button className="btn btn-outline" onClick={handleGoogleLogin}>
@@ -60,7 +60,7 @@ function LoginForm() {
 
       <div className="divider">or</div>
 
-      <form className="flex flex-col gap-4 flex-1">
+      <form className="flex flex-1 flex-col gap-4">
         <Field
           label="Email"
           type="email"
@@ -106,7 +106,7 @@ function LoginPhoto() {
       <img
         src="/doctor-on-left.jpg"
         alt="Doctor"
-        className="w-full h-full object-cover object-left"
+        className="h-full w-full object-cover object-left"
       />
     </div>
   );
@@ -115,13 +115,13 @@ function LoginPhoto() {
 export default function Login() {
   return (
     <dialog id="login-modal" className="modal">
-      <div className="modal-box max-w-5xl p-0 overflow-hidden relative">
+      <div className="modal-box relative max-w-5xl overflow-hidden p-0">
         <form method="dialog">
-          <button className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2">
+          <button className="btn btn-sm btn-circle btn-ghost absolute top-2 right-2">
             ✕
           </button>
         </form>
-        <div className="grid grid-cols-2 min-h-160">
+        <div className="grid min-h-160 grid-cols-2">
           <LoginPhoto />
           <LoginForm />
         </div>
