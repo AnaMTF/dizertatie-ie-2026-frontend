@@ -55,7 +55,7 @@ function AppointmentsTable() {
 function Sidebar() {
   return (
     <div className="flex shrink-0 flex-col gap-4">
-      <DayPicker className="react-day-picker bg-base-200 shadow" />
+      <DayPicker className="react-day-picker bg-base-200 rounded-box mx-auto p-4 shadow" />
       <div className="card bg-base-200 shadow">
         <div className="card-body">
           <h2 className="card-title text-sm">Info</h2>
