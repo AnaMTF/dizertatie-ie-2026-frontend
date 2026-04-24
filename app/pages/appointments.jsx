@@ -68,7 +68,7 @@ function Sidebar() {
 
 export default function Appointments() {
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div className="flex h-full flex-col gap-4 px-9 pt-6">
       <TopBar />
       <div className="flex min-h-0 flex-1 flex-col items-stretch gap-6 lg:flex-row">
         <AppointmentsTable />

@@ -27,7 +27,8 @@ export default function Profile() {
   const fullName = `${user.firstName} ${user.lastName}`;
 
   return (
-    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 py-10">
+    <div className="px-9 pt-6">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 pb-10">
       <div className="flex flex-col gap-3">
         <div>
           <h1 className="text-2xl font-bold">Profile</h1>
@@ -101,6 +102,7 @@ export default function Profile() {
             </div>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

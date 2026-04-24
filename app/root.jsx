@@ -14,7 +14,7 @@ export function Layout({ children }) {
       </head>
       <body className="flex h-screen flex-col">
         <Navbar />
-        <main className="flex-1 overflow-y-auto px-9 pt-6">{children}</main>
+        <main className="flex-1 overflow-y-auto">{children}</main>
         <ScrollRestoration />
         <Scripts />
       </body>
