@@ -26,8 +26,10 @@ export default function Profile() {
     <div className="mx-auto flex max-w-lg flex-col gap-6 py-10">
       <div className="flex flex-col items-center gap-3">
         <div className="text-center">
-          <h1 className="text-2xl font-bold">{fullName}</h1>
-          <p className="text-base-content/50 text-sm">{user.email}</p>
+          <h1 className="text-2xl font-bold">Profile</h1>
+          <p className="text-base-content/50 text-sm">
+            Keep your personal details and medical notes up to date
+          </p>
         </div>
       </div>
 
@@ -36,6 +38,7 @@ export default function Profile() {
           <h2 className="text-base-content/40 mb-2 text-xs font-semibold tracking-widest uppercase">
             Personal
           </h2>
+          <InfoRow label="Name" value={fullName} />
           <InfoRow label="Date of Birth" value={user.dateOfBirth} />
           <InfoRow
             label="Height"
