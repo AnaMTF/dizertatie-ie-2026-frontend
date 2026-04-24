@@ -1,4 +1,5 @@
 import {
+  FaBell,
   FaCalendarAlt,
   FaMedkit,
   FaRobot,
@@ -13,7 +14,34 @@ import Login from "../authentication/login";
 import Logout from "../authentication/logout";
 import Register from "../authentication/register";
 
+// const API_BASE = "http://localhost:9000/api/v1";
+
+// function getAuthToken() {
+//   return localStorage.getItem("token");
+// }
+
 function LoggedInActions() {
+  // const [unreadCount, setUnreadCount] = useState(0);
+
+  // useEffect(() => {
+  //   async function fetchUnread() {
+  //     try {
+  //       const res = await fetch(`${API_BASE}/scan/unread-count`, {
+  //         headers: { Authorization: `Bearer ${getAuthToken()}` },
+  //       });
+  //       const json = await res.json();
+  //       if (res.ok) setUnreadCount(json.data?.count ?? 0);
+  //     } catch {
+  //       // silently fail
+  //     }
+  //   }
+  //   fetchUnread();
+  //   const id = setInterval(fetchUnread, 30_000);
+  //   return () => clearInterval(id);
+  // }, []);
+
+  const unreadCount = 3; // TODO: replace with real unread count from API
+
   function handleLogOut() {
     document.getElementById("logout-modal").showModal();
   }
@@ -23,6 +51,16 @@ function LoggedInActions() {
       <Link to="/ai-scan" className="btn btn-sm btn-primary">
         <FaRobot />
         AI Scan
+      </Link>
+
+      <Link to="/ai-scan" className="btn btn-sm btn-ghost indicator">
+        {unreadCount > 0 && (
+          <span className="badge badge-error badge-xs indicator-item">
+            {unreadCount}
+          </span>
+        )}
+        <FaBell />
+        Notifications
       </Link>
 
       <Link to="/appointments" className="btn btn-sm btn-ghost">
