@@ -42,15 +42,15 @@ export default function HeroCarousel({ isLoggedIn }) {
   const [current, setCurrent] = useState(0);
 
   return (
-    <div className="bg-base-200 relative min-h-[70vh] w-full overflow-hidden">
+    <div className="bg-base-200 relative h-full w-full overflow-hidden">
       <div
-        className="flex transition-transform duration-500 ease-in-out"
+        className="flex h-full transition-transform duration-500 ease-in-out"
         style={{ transform: `translateX(-${current * 100}%)` }}
       >
         {slides.map((slide) => (
           <div
             key={slide.id}
-            className="relative flex min-h-[70vh] w-full shrink-0 items-center justify-center"
+            className="relative flex h-full w-full shrink-0 items-center justify-center"
           >
             <img
               src={slide.image}
