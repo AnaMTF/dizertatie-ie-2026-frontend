@@ -21,16 +21,10 @@ function InfoRow({ label, value }) {
 export default function Profile() {
   const user = mockUser;
   const fullName = `${user.firstName} ${user.lastName}`;
-  const initials = `${user.firstName[0]}${user.lastName[0]}`;
 
   return (
     <div className="mx-auto flex max-w-lg flex-col gap-6 py-10">
       <div className="flex flex-col items-center gap-3">
-        <div className="avatar avatar-placeholder">
-          <div className="bg-primary text-primary-content w-20 rounded-full text-2xl font-bold">
-            <span>{initials}</span>
-          </div>
-        </div>
         <div className="text-center">
           <h1 className="text-2xl font-bold">{fullName}</h1>
           <p className="text-base-content/50 text-sm">{user.email}</p>
@@ -54,16 +48,16 @@ export default function Profile() {
         </div>
       </div>
 
-      {user.additionalInfo && (
-        <div className="card bg-base-200 shadow">
-          <div className="card-body p-4">
-            <h2 className="text-base-content/40 mb-2 text-xs font-semibold tracking-widest uppercase">
-              Notes for doctor
-            </h2>
-            <p className="text-sm">{user.additionalInfo}</p>
-          </div>
+      <div className="card bg-base-200 shadow">
+        <div className="card-body p-4">
+          <h2 className="text-base-content/40 mb-2 text-xs font-semibold tracking-widest uppercase">
+            Notes for doctor
+          </h2>
+          <p className="text-base-content/70 text-sm">
+            {user.additionalInfo || "No additional information provided."}
+          </p>
         </div>
-      )}
+      </div>
 
       <button className="btn btn-outline btn-sm self-center">
         Edit Profile
