@@ -5,6 +5,8 @@ import { Link } from "react-router";
 const slides = [
   {
     id: "slide1",
+    image: "/abstract-network-bg-2.jpg",
+    imageAlt: "Abstract AI network visualization",
     icon: <FaRobot className="size-14" />,
     title: "AI-Powered Scan",
     description:
@@ -14,6 +16,8 @@ const slides = [
   },
   {
     id: "slide2",
+    image: "/clipboard-and-stethoscope-1.jpg",
+    imageAlt: "Clipboard and stethoscope for appointments",
     icon: <FaCalendarAlt className="size-14" />,
     title: "Easy Appointments",
     description:
@@ -23,6 +27,8 @@ const slides = [
   },
   {
     id: "slide3",
+    image: "/stethoscope-2.jpg",
+    imageAlt: "Doctor holding medical notes",
     icon: <FaUserMd className="size-14" />,
     title: "Your Health Profile",
     description:
@@ -44,9 +50,15 @@ export default function HeroCarousel({ isLoggedIn }) {
         {slides.map((slide) => (
           <div
             key={slide.id}
-            className="flex min-h-[70vh] w-full shrink-0 items-center justify-center"
+            className="relative flex min-h-[70vh] w-full shrink-0 items-center justify-center"
           >
-            <div className="max-w-xl px-4 text-center">
+            <img
+              src={slide.image}
+              alt={slide.imageAlt}
+              className="absolute inset-0 h-full w-full object-cover"
+            />
+            <div className="bg-base-200/70 absolute inset-0" />
+            <div className="rounded-box bg-base-100/80 relative max-w-xl px-4 py-6 text-center shadow">
               <div className="text-primary mb-4 flex justify-center">
                 {slide.icon}
               </div>
