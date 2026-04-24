@@ -69,10 +69,10 @@ export default function Profile() {
           </div>
         </div>
 
-        <div className="flex flex-col gap-4">
-          <DayPicker className="react-day-picker bg-base-200 rounded-box mx-auto p-4 shadow" />
+        <div className="flex w-full flex-col gap-4">
+          <DayPicker className="react-day-picker bg-base-200 rounded-box flex w-full justify-center p-4 shadow" />
 
-          <div className="card bg-base-200 shadow">
+          <div className="card bg-base-200 w-full shadow">
             <div className="card-body p-4">
               <h2 className="text-base-content/40 mb-1 text-xs font-semibold tracking-widest uppercase">
                 Quick actions
