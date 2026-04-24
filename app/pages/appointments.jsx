@@ -3,14 +3,14 @@ import CreateAppointment from "../components/appointments/create-appointment";
 
 function TopBar() {
   return (
-    <div className="flex items-center justify-between">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Appointments</h1>
         <p className="text-base-content/50 text-sm">
           Manage and track your medical appointments
         </p>
       </div>
-      <div className="flex gap-2">
+      <div className="flex w-full flex-wrap gap-2 sm:w-auto sm:flex-nowrap">
         <button className="btn btn-secondary">Filter</button>
         <button
           className="btn btn-primary"
@@ -54,7 +54,7 @@ function AppointmentsTable() {
 
 function Sidebar() {
   return (
-    <div className="flex shrink-0 flex-col gap-4">
+    <div className="flex w-full shrink-0 flex-col gap-4 lg:w-auto">
       <DayPicker className="react-day-picker bg-base-200 rounded-box mx-auto p-4 shadow" />
       <div className="card bg-base-200 shadow">
         <div className="card-body">
@@ -70,7 +70,7 @@ export default function Appointments() {
   return (
     <div className="flex h-full flex-col gap-4">
       <TopBar />
-      <div className="flex min-h-0 flex-1 items-stretch gap-6">
+      <div className="flex min-h-0 flex-1 flex-col items-stretch gap-6 lg:flex-row">
         <AppointmentsTable />
         <Sidebar />
       </div>
