@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { FaPlus, FaRobot, FaSyncAlt } from "react-icons/fa";
 import { redirect } from "react-router";
 import CreateScan from "../components/scans/create-scan";
-import { getToken, getUser } from "../utils/auth";
+import { API_BASE, getToken, getUser } from "../utils/auth";
 
 export function clientLoader() {
   if (!getToken()) return redirect("/?login=true");
@@ -11,7 +11,42 @@ export function clientLoader() {
   return null;
 }
 
-const API_BASE = "http://localhost:9000/api/v1";
+function extractErrorMessage(error) {
+  if (Array.isArray(error)) {
+    return error[0]?.message || "Request validation failed";
+  }
+
+  if (typeof error === "string") {
+    return error;
+  }
+
+  return "Something went wrong";
+}
+
+function formatScanResults(results) {
+  if (!results) {
+    return "—";
+  }
+
+  if (typeof results === "string") {
+    return results;
+  }
+
+  if (typeof results.summary === "string" && results.summary.trim()) {
+    return results.summary;
+  }
+
+  const firstEntry = Object.entries(results).find(([, value]) => value != null);
+
+  if (!firstEntry) {
+    return "Analysis complete";
+  }
+
+  const [key, value] = firstEntry;
+  return typeof value === "string"
+    ? `${key}: ${value}`
+    : `${key}: ${JSON.stringify(value)}`;
+}
 
 const ANATOMICAL_REGIONS = [
   {
@@ -350,7 +385,7 @@ function ScanConfigurator({ selectedOrgan, onSelectOrgan, onStartScan }) {
   );
 }
 
-function ScansTable({ scans, loading, onRefresh }) {
+function ScansTable({ scans, loading, error, onRefresh }) {
   return (
     <div className="card bg-base-100 flex-1 shadow">
       <div className="card-body overflow-auto p-0">
@@ -375,6 +410,13 @@ function ScansTable({ scans, loading, onRefresh }) {
             </tr>
           </thead>
           <tbody>
+            {!loading && error && (
+              <tr>
+                <td colSpan={5} className="text-error px-4 py-6 text-center">
+                  {error}
+                </td>
+              </tr>
+            )}
             {loading && (
               <tr>
                 <td colSpan={5} className="text-base-content/40 text-center">
@@ -382,7 +424,7 @@ function ScansTable({ scans, loading, onRefresh }) {
                 </td>
               </tr>
             )}
-            {!loading && scans.length === 0 && (
+            {!loading && !error && scans.length === 0 && (
               <tr>
                 <td colSpan={5} className="text-base-content/40 text-center">
                   No scans yet. Click &ldquo;New Scan&rdquo; to get started.
@@ -390,6 +432,7 @@ function ScansTable({ scans, loading, onRefresh }) {
               </tr>
             )}
             {!loading &&
+              !error &&
               scans.map((scan) => (
                 <tr key={scan.uuid}>
                   <td className="whitespace-nowrap">
@@ -419,7 +462,7 @@ function ScansTable({ scans, loading, onRefresh }) {
                   <td className="max-w-xs">
                     {scan.results ? (
                       <p className="text-base-content/70 truncate text-sm">
-                        {scan.results}
+                        {formatScanResults(scan.results)}
                       </p>
                     ) : (
                       <span className="text-base-content/30 text-sm">—</span>
@@ -488,16 +531,29 @@ function Sidebar({ scans }) {
 export default function AiScan() {
   const [scans, setScans] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [selectedOrgan, setSelectedOrgan] = useState("");
 
   const fetchScans = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch(`${API_BASE}/scan`, {
         headers: { Authorization: `Bearer ${getAuthToken()}` },
       });
-      const json = await res.json();
-      if (res.ok) setScans(json.data ?? []);
+      const json = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        throw new Error(extractErrorMessage(json?.error));
+      }
+
+      if (!json?.data || !Array.isArray(json.data)) {
+        throw new Error("Invalid server response");
+      }
+
+      setScans(json.data);
+    } catch (fetchError) {
+      setError(fetchError.message || "Unable to load scans.");
     } finally {
       setLoading(false);
     }
@@ -524,7 +580,12 @@ export default function AiScan() {
         onStartScan={handleNewScan}
       />
       <div className="flex min-h-0 flex-1 flex-col items-stretch gap-6 lg:flex-row">
-        <ScansTable scans={scans} loading={loading} onRefresh={fetchScans} />
+        <ScansTable
+          scans={scans}
+          loading={loading}
+          error={error}
+          onRefresh={fetchScans}
+        />
         <Sidebar scans={scans} />
       </div>
       <CreateScan

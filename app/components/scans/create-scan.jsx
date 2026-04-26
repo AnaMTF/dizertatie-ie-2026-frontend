@@ -7,10 +7,12 @@ import {
   FaRobot,
   FaTimesCircle,
 } from "react-icons/fa";
+import { API_BASE, getToken } from "../../utils/auth";
 import StepActions from "../common/step-actions";
 
 const BODY_PARTS = [
   "Head / Brain",
+  "Eyes",
   "Neck",
   "Chest",
   "Abdomen",
@@ -36,10 +38,57 @@ const IMAGE_TYPES = [
 
 const MAX_IMAGES_PER_SCAN = 4;
 
-const API_BASE = "http://localhost:9000/api/v1";
+const POLL_INTERVAL_MS = 5000;
+const MAX_POLL_ATTEMPTS = 24;
 
 function getAuthToken() {
-  return localStorage.getItem("token");
+  return getToken();
+}
+
+function extractErrorMessage(error) {
+  if (Array.isArray(error)) {
+    return error[0]?.message || "Request validation failed";
+  }
+
+  if (typeof error === "string") {
+    return error;
+  }
+
+  return "Something went wrong";
+}
+
+function formatScanResults(results) {
+  if (!results) {
+    return "Results are not available yet.";
+  }
+
+  if (typeof results === "string") {
+    return results;
+  }
+
+  if (typeof results.summary === "string" && results.summary.trim()) {
+    return results.summary;
+  }
+
+  const entries = Object.entries(results)
+    .map(([key, value]) => {
+      if (value == null) {
+        return null;
+      }
+
+      if (typeof value === "string") {
+        return `${key}: ${value}`;
+      }
+
+      return `${key}: ${JSON.stringify(value)}`;
+    })
+    .filter(Boolean);
+
+  if (!entries.length) {
+    return "Analysis complete.";
+  }
+
+  return entries.join("\n");
 }
 
 function StatusBadge({ status }) {
@@ -221,21 +270,14 @@ function StepCategorize({ files, onFilesChange, onNext, onBack }) {
   );
 }
 
-function StepReview({
-  files,
-  notes,
-  onNotesChange,
-  onBack,
-  onSubmit,
-  submitting,
-}) {
+function StepReview({ files, onBack, onSubmit, submitting }) {
   return (
     <div className="flex h-full flex-col gap-4">
       <h2 className="flex items-center gap-2 text-2xl font-bold">
         <FaRobot /> Review &amp; submit
       </h2>
       <p className="text-base-content/60 text-sm">
-        Check your images and add any notes before sending for AI analysis.
+        Check your images before sending them for AI analysis.
       </p>
 
       <div className="flex flex-col gap-2 overflow-y-auto">
@@ -259,14 +301,6 @@ function StepReview({
         ))}
       </div>
 
-      <textarea
-        className="textarea w-full"
-        placeholder="Additional notes for the AI (optional)…"
-        value={notes}
-        onChange={(e) => onNotesChange(e.target.value)}
-        rows={3}
-      />
-
       <StepActions
         onNext={onSubmit}
         onBack={onBack}
@@ -280,31 +314,79 @@ function StepReview({
 function PostSubmitPanel({ scan, onClose }) {
   const [currentScan, setCurrentScan] = useState(scan);
   const [waiting, setWaiting] = useState(false);
+  const [pollError, setPollError] = useState(null);
   const intervalRef = useRef(null);
+  const attemptsRef = useRef(0);
 
   useEffect(() => {
-    return () => clearInterval(intervalRef.current);
+    return () => {
+      clearInterval(intervalRef.current);
+    };
   }, []);
 
-  function startWaiting() {
-    setWaiting(true);
-    intervalRef.current = setInterval(async () => {
-      try {
-        const res = await fetch(`${API_BASE}/scan/${scan.uuid}`, {
-          headers: { Authorization: `Bearer ${getAuthToken()}` },
-        });
-        const json = await res.json();
-        if (
-          json.data?.status === "completed" ||
-          json.data?.status === "failed"
-        ) {
-          clearInterval(intervalRef.current);
-          setCurrentScan(json.data);
-        }
-      } catch {
-        // network error — keep polling
+  async function pollScanStatus() {
+    try {
+      const res = await fetch(`${API_BASE}/scan/${scan.uuid}`, {
+        headers: { Authorization: `Bearer ${getAuthToken()}` },
+      });
+      const json = await res.json().catch(() => null);
+
+      if (!res.ok && res.status !== 202) {
+        throw new Error(extractErrorMessage(json?.error));
       }
-    }, 5000);
+
+      if (!json?.data) {
+        throw new Error("Invalid server response");
+      }
+
+      setCurrentScan(json.data);
+
+      if (
+        json.data.status === "completed" ||
+        json.data.status === "failed" ||
+        attemptsRef.current >= MAX_POLL_ATTEMPTS
+      ) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+
+      if (
+        attemptsRef.current >= MAX_POLL_ATTEMPTS &&
+        json.data.status === "processing"
+      ) {
+        setPollError(
+          "Analysis is taking longer than expected. You can close this window and check back later.",
+        );
+      }
+    } catch (error) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+      setPollError(error.message || "Unable to refresh scan status.");
+    }
+  }
+
+  function startWaiting() {
+    clearInterval(intervalRef.current);
+    setWaiting(true);
+    setPollError(null);
+    attemptsRef.current = 0;
+
+    pollScanStatus();
+
+    intervalRef.current = setInterval(async () => {
+      attemptsRef.current += 1;
+
+      if (attemptsRef.current > MAX_POLL_ATTEMPTS) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+        setPollError(
+          "Analysis is taking longer than expected. You can close this window and check back later.",
+        );
+        return;
+      }
+
+      await pollScanStatus();
+    }, POLL_INTERVAL_MS);
   }
 
   if (waiting && currentScan.status === "completed") {
@@ -314,7 +396,9 @@ function PostSubmitPanel({ scan, onClose }) {
           <FaCheckCircle /> Analysis complete
         </h2>
         <div className="bg-base-200 flex-1 overflow-y-auto rounded-xl p-4">
-          <p className="text-sm leading-relaxed">{currentScan.results}</p>
+          <p className="text-sm leading-relaxed whitespace-pre-line">
+            {formatScanResults(currentScan.results)}
+          </p>
         </div>
         <button type="button" className="btn btn-primary" onClick={onClose}>
           Done
@@ -348,6 +432,12 @@ function PostSubmitPanel({ scan, onClose }) {
           This usually takes about 15 seconds. You can leave and check back
           later.
         </p>
+        {pollError && (
+          <div className="alert alert-warning w-full max-w-lg">
+            <FaTimesCircle />
+            <span>{pollError}</span>
+          </div>
+        )}
         <button type="button" className="btn btn-ghost" onClick={onClose}>
           Leave &mdash; notify me later
         </button>
@@ -391,7 +481,6 @@ function CreateScanForm({
 }) {
   const [step, setStep] = useState(0);
   const [files, setFiles] = useState([]);
-  const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [createdScan, setCreatedScan] = useState(null);
@@ -400,23 +489,35 @@ function CreateScanForm({
     setSubmitting(true);
     setError(null);
     try {
+      const metadata = files.map((item) => ({
+        fileName: item.file.name,
+        bodyPart: item.bodyPart,
+        imageType: item.imageType,
+      }));
+      const formData = new FormData();
+
+      files.forEach((item) => {
+        formData.append("images", item.file);
+      });
+      formData.append("metadata", JSON.stringify(metadata));
+
       const res = await fetch(`${API_BASE}/scan`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${getAuthToken()}`,
         },
-        body: JSON.stringify({
-          images: files.map((f) => ({
-            fileName: f.file.name,
-            bodyPart: f.bodyPart,
-            imageType: f.imageType,
-          })),
-          notes: notes || undefined,
-        }),
+        body: formData,
       });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.message || "Failed to submit scan");
+      const json = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        throw new Error(extractErrorMessage(json?.error));
+      }
+
+      if (!json?.data) {
+        throw new Error("Invalid server response");
+      }
+
       setCreatedScan(json.data);
       onScanCreated?.();
     } catch (err) {
@@ -429,7 +530,6 @@ function CreateScanForm({
   function reset() {
     files.forEach((f) => URL.revokeObjectURL(f.preview));
     setFiles([]);
-    setNotes("");
     setStep(0);
     setError(null);
     setCreatedScan(null);
@@ -495,8 +595,6 @@ function CreateScanForm({
         {step === 2 && (
           <StepReview
             files={files}
-            notes={notes}
-            onNotesChange={setNotes}
             onBack={() => setStep(1)}
             onSubmit={handleSubmit}
             submitting={submitting}
