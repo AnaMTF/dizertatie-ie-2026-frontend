@@ -22,6 +22,108 @@ function isAtLeast18(dateStr) {
   );
 }
 
+function validatePassword(password) {
+  const hasMinLength = password.length >= 8;
+  const hasMaxLength = password.length <= 128;
+  const hasUppercase = /[A-Z]/.test(password);
+  const hasLowercase = /[a-z]/.test(password);
+  const hasDigit = /[0-9]/.test(password);
+  const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/.test(password);
+
+  return {
+    hasMinLength,
+    hasMaxLength,
+    hasUppercase,
+    hasLowercase,
+    hasDigit,
+    hasSpecialChar,
+    isValid:
+      hasMinLength &&
+      hasMaxLength &&
+      hasUppercase &&
+      hasLowercase &&
+      hasDigit &&
+      hasSpecialChar,
+  };
+}
+
+function getPasswordStrength(password) {
+  if (!password) return 0;
+
+  const validation = validatePassword(password);
+  const metRequirements = [
+    validation.hasMinLength,
+    validation.hasUppercase,
+    validation.hasLowercase,
+    validation.hasDigit,
+    validation.hasSpecialChar,
+  ].filter(Boolean).length;
+
+  return Math.ceil((metRequirements / 5) * 100);
+}
+
+function getStrengthColor(strength) {
+  if (strength < 40) return "progress-error";
+  if (strength < 70) return "progress-warning";
+  return "progress-success";
+}
+
+function getStrengthLabel(strength) {
+  if (strength < 40) return "Weak";
+  if (strength < 70) return "Fair";
+  return "Strong";
+}
+
+function PasswordRequirementsChecklist({ password, confirmPassword }) {
+  const passwordValidation = validatePassword(password);
+  const strength = getPasswordStrength(password);
+  const strengthColor = password ? getStrengthColor(strength) : "";
+  const strengthLabel = getStrengthLabel(strength);
+  const passwordsMatch =
+    password === confirmPassword && confirmPassword.length > 0;
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between">
+        <span className="text-base-content/70 text-sm">Strength</span>
+        {password && (
+          <span className="text-sm font-semibold">{strengthLabel}</span>
+        )}
+      </div>
+      <progress
+        className={`progress w-full ${strengthColor}`}
+        value={strength}
+        max="100"
+      />
+      <ul className="text-base-content/60 space-y-1 text-xs">
+        <li className={passwordValidation.hasMinLength ? "text-success" : ""}>
+          {passwordValidation.hasMinLength ? "✓" : "○"} At least 8 characters
+        </li>
+        <li className={passwordValidation.hasUppercase ? "text-success" : ""}>
+          {passwordValidation.hasUppercase ? "✓" : "○"} At least one uppercase
+          letter
+        </li>
+        <li className={passwordValidation.hasLowercase ? "text-success" : ""}>
+          {passwordValidation.hasLowercase ? "✓" : "○"} At least one lowercase
+          letter
+        </li>
+        <li className={passwordValidation.hasDigit ? "text-success" : ""}>
+          {passwordValidation.hasDigit ? "✓" : "○"} At least one number
+        </li>
+        <li className={passwordValidation.hasSpecialChar ? "text-success" : ""}>
+          {passwordValidation.hasSpecialChar ? "✓" : "○"} At least one special
+          character
+        </li>
+        {confirmPassword && (
+          <li className={passwordsMatch ? "text-success" : "text-error"}>
+            {passwordsMatch ? "✓" : "✕"} Passwords match
+          </li>
+        )}
+      </ul>
+    </div>
+  );
+}
+
 function Field({ label, type, name, value, onChange }) {
   return (
     <label className="floating-label">
@@ -75,10 +177,11 @@ function StepEmail({ onNext, values, onChange }) {
 }
 
 function StepPassword({ onNext, onBack, values, onChange }) {
-  const isValid =
-    values.password.length >= 8 &&
-    values.password.length <= 128 &&
-    values.password === values.confirmPassword;
+  const passwordValidation = validatePassword(values.password);
+  const passwordsMatch =
+    values.password === values.confirmPassword && values.password.length > 0;
+
+  const isValid = passwordValidation.isValid && passwordsMatch;
 
   return (
     <form className="flex h-full flex-col gap-4">
@@ -99,11 +202,19 @@ function StepPassword({ onNext, onBack, values, onChange }) {
         value={values.confirmPassword}
         onChange={onChange}
       />
+      <PasswordRequirementsChecklist
+        password={values.password}
+        confirmPassword={values.confirmPassword}
+      />
       <StepActions
         onNext={onNext}
         onBack={onBack}
         disabled={!isValid}
-        tooltipMessage="Passwords must match and be at least 8 characters long"
+        tooltipMessage={
+          !passwordValidation.isValid
+            ? "Please meet all password requirements"
+            : "Passwords must match"
+        }
       />
     </form>
   );
