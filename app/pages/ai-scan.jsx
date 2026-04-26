@@ -110,16 +110,6 @@ function InteractiveAnatomyMap({ selectedOrgan, onSelectOrgan }) {
             />
 
             <g>
-              <g
-                className={getOrganStyle("eyes")}
-                onClick={() => onSelectOrgan("eyes")}
-                onMouseEnter={() => setHoveredOrgan("eyes")}
-                onMouseLeave={() => setHoveredOrgan(null)}
-              >
-                <ellipse cx="178" cy="68" rx="14" ry="7" />
-                <ellipse cx="222" cy="68" rx="14" ry="7" />
-              </g>
-
               <path
                 d="M 160 60 C 160 30 240 30 240 60 C 240 85 160 85 160 60 Z"
                 className={getOrganStyle("brain")}
@@ -127,6 +117,16 @@ function InteractiveAnatomyMap({ selectedOrgan, onSelectOrgan }) {
                 onMouseEnter={() => setHoveredOrgan("brain")}
                 onMouseLeave={() => setHoveredOrgan(null)}
               />
+
+              <g
+                className={getOrganStyle("eyes")}
+                onClick={() => onSelectOrgan("eyes")}
+                onMouseEnter={() => setHoveredOrgan("eyes")}
+                onMouseLeave={() => setHoveredOrgan(null)}
+              >
+                <ellipse cx="178" cy="60" rx="14" ry="7" />
+                <ellipse cx="222" cy="60" rx="14" ry="7" />
+              </g>
 
               <g
                 className={getOrganStyle("lungs")}
