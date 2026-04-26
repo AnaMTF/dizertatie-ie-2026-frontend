@@ -1,10 +1,5 @@
 import { useState } from "react";
-import {
-  FaExclamationTriangle,
-  FaFacebook,
-  FaGoogle,
-  FaSignInAlt,
-} from "react-icons/fa";
+import { FaExclamationTriangle, FaGoogle, FaSignInAlt } from "react-icons/fa";
 import isEmail from "validator/lib/isEmail";
 
 function Field({ label, type, name, value, onChange }) {
@@ -34,10 +29,6 @@ function LoginForm() {
     // TODO: implement Google login
   }
 
-  function handleFacebookLogin() {
-    // TODO: implement Facebook login
-  }
-
   function handleLogin() {
     // TODO: implement login
   }
@@ -52,9 +43,6 @@ function LoginForm() {
         </h2>
         <button className="btn btn-outline" onClick={handleGoogleLogin}>
           <FaGoogle /> Continue with Google
-        </button>
-        <button className="btn btn-outline" onClick={handleFacebookLogin}>
-          <FaFacebook /> Continue with Facebook
         </button>
       </div>
 

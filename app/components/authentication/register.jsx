@@ -1,6 +1,5 @@
 import { useState } from "react";
 import {
-  FaFacebook,
   FaGoogle,
   FaLock,
   FaNotesMedical,
@@ -44,10 +43,6 @@ function StepEmail({ onNext, values, onChange }) {
     // TODO: implement Google login
   }
 
-  function handleFacebookLogin() {
-    // TODO: implement Facebook login
-  }
-
   const isValid = isEmail(values.email);
 
   return (
@@ -57,9 +52,6 @@ function StepEmail({ onNext, values, onChange }) {
       </h2>
       <button className="btn btn-outline" onClick={handleGoogleLogin}>
         <FaGoogle /> Continue with Google
-      </button>
-      <button className="btn btn-outline" onClick={handleFacebookLogin}>
-        <FaFacebook /> Continue with Facebook
       </button>
 
       <div className="divider">or</div>
