@@ -1,24 +1,19 @@
 import { useEffect, useState } from "react";
 import { DayPicker } from "react-day-picker";
 import { FaCalendarPlus, FaRobot, FaUserEdit } from "react-icons/fa";
-import { Link } from "react-router";
+import { Link, redirect, useLoaderData } from "react-router";
+import { getToken, getUser } from "../utils/auth";
 
 const API_BASE = "http://localhost:9000/api/v1";
 
-function getAuthToken() {
-  return localStorage.getItem("token");
+export function clientLoader() {
+  if (!getToken()) return redirect("/?login=true");
+  return { user: getUser() };
 }
 
-// Placeholder — replace with real user data from loader
-const mockUser = {
-  firstName: "Anamaria",
-  lastName: "Titeche",
-  email: "anamaria@example.com",
-  dateOfBirth: "1995-06-14",
-  height: 165,
-  weight: 58,
-  additionalInfo: "No known allergies.",
-};
+function getAuthToken() {
+  return getToken();
+}
 
 function InfoRow({ label, value }) {
   return (
@@ -208,7 +203,7 @@ function UpcomingAppointments() {
 }
 
 export default function Profile() {
-  const user = mockUser;
+  const { user } = useLoaderData();
   const fullName = `${user.firstName} ${user.lastName}`;
 
   return (

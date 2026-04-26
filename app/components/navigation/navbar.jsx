@@ -110,7 +110,8 @@ function LoggedOutActions() {
   );
 }
 
-export function Navbar({ isLoggedIn = true }) {
+export function Navbar({ user = null }) {
+  const isLoggedIn = Boolean(user);
   function handleSearch() {
     // TODO: implement search logic
   }

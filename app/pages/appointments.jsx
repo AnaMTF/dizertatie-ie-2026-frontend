@@ -1,5 +1,12 @@
 import { DayPicker } from "react-day-picker";
+import { redirect } from "react-router";
 import CreateAppointment from "../components/appointments/create-appointment";
+import { getToken } from "../utils/auth";
+
+export function clientLoader() {
+  if (!getToken()) return redirect("/?login=true");
+  return null;
+}
 
 function TopBar() {
   return (

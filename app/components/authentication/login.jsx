@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { FaExclamationTriangle, FaGoogle, FaSignInAlt } from "react-icons/fa";
+import { useNavigate } from "react-router";
 import isEmail from "validator/lib/isEmail";
+import { API_BASE, setAuth } from "../../utils/auth";
 
 function Field({ label, type, name, value, onChange }) {
   return (
@@ -20,6 +22,9 @@ function Field({ label, type, name, value, onChange }) {
 
 function LoginForm() {
   const [form, setForm] = useState({ email: "", password: "" });
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   function handleChange(e) {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -29,8 +34,32 @@ function LoginForm() {
     // TODO: implement Google login
   }
 
-  function handleLogin() {
-    // TODO: implement login
+  async function handleLogin() {
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/auth/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: form.email, password: form.password }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        setError(json?.message || `Login failed (HTTP ${res.status})`);
+        return;
+      }
+      if (!json?.data) {
+        setError("Login failed: invalid server response");
+        return;
+      }
+      setAuth(json.data);
+      document.getElementById("login-modal").close();
+      navigate("/profile");
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   const isValid = isEmail(form.email) && form.password.length >= 8;
@@ -49,6 +78,12 @@ function LoginForm() {
       <div className="divider">or</div>
 
       <form className="flex flex-1 flex-col gap-4">
+        {error && (
+          <div className="alert alert-error">
+            <FaExclamationTriangle />
+            <span>{error}</span>
+          </div>
+        )}
         <Field
           label="Email"
           type="email"
@@ -78,9 +113,13 @@ function LoginForm() {
             type="button"
             className="btn btn-primary w-full"
             onClick={handleLogin}
-            disabled={!isValid}
+            disabled={!isValid || loading}
           >
-            Login
+            {loading ? (
+              <span className="loading loading-spinner loading-sm" />
+            ) : (
+              "Login"
+            )}
           </button>
         </div>
       </form>

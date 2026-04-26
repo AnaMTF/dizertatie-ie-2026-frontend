@@ -1,7 +1,20 @@
-import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
+import { useEffect, useState } from "react";
+import {
+  Links,
+  Meta,
+  Outlet,
+  Scripts,
+  ScrollRestoration,
+  useLoaderData,
+} from "react-router";
 import { Navbar } from "./components/navigation/navbar";
+import { AUTH_CHANGED_EVENT, getUser } from "./utils/auth";
 
 import "./app.css";
+
+export function clientLoader() {
+  return { user: getUser() };
+}
 
 export function Layout({ children }) {
   return (
@@ -13,7 +26,6 @@ export function Layout({ children }) {
         <Links />
       </head>
       <body className="flex h-screen flex-col">
-        <Navbar />
         <main className="flex-1 overflow-y-auto">{children}</main>
         <ScrollRestoration />
         <Scripts />
@@ -23,5 +35,28 @@ export function Layout({ children }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  const { user } = useLoaderData();
+  const [currentUser, setCurrentUser] = useState(user);
+
+  useEffect(() => {
+    setCurrentUser(user);
+  }, [user]);
+
+  useEffect(() => {
+    function handleAuthChanged() {
+      setCurrentUser(getUser());
+    }
+
+    window.addEventListener(AUTH_CHANGED_EVENT, handleAuthChanged);
+    return () => {
+      window.removeEventListener(AUTH_CHANGED_EVENT, handleAuthChanged);
+    };
+  }, []);
+
+  return (
+    <>
+      <Navbar user={currentUser} />
+      <Outlet context={{ user: currentUser }} />
+    </>
+  );
 }

@@ -1,11 +1,20 @@
 import { useCallback, useEffect, useState } from "react";
 import { FaPlus, FaRobot, FaSyncAlt } from "react-icons/fa";
+import { redirect } from "react-router";
 import CreateScan from "../components/scans/create-scan";
+import { getToken, getUser } from "../utils/auth";
+
+export function clientLoader() {
+  if (!getToken()) return redirect("/?login=true");
+  const user = getUser();
+  if (user?.role !== "patient") return redirect("/");
+  return null;
+}
 
 const API_BASE = "http://localhost:9000/api/v1";
 
 function getAuthToken() {
-  return localStorage.getItem("token");
+  return getToken();
 }
 
 function StatusBadge({ status }) {

@@ -1,8 +1,21 @@
 import { FaSignOutAlt } from "react-icons/fa";
+import { useNavigate } from "react-router";
+import { API_BASE, clearAuth, getToken } from "../../utils/auth";
 
 export default function Logout() {
-  function handleLogOut() {
-    // TODO: clear session and redirect to login
+  const navigate = useNavigate();
+
+  async function handleLogOut() {
+    const token = getToken();
+    if (token) {
+      fetch(`${API_BASE}/auth/logout`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => {});
+    }
+    clearAuth();
+    document.getElementById("logout-modal").close();
+    navigate("/");
   }
 
   return (
