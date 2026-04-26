@@ -1,13 +1,16 @@
 import { useState } from "react";
 import {
+  FaExclamationTriangle,
   FaGoogle,
   FaLock,
   FaNotesMedical,
   FaUser,
   FaUserPlus,
 } from "react-icons/fa";
+import { useNavigate } from "react-router";
 import isEmail from "validator/lib/isEmail";
 import isNumeric from "validator/lib/isNumeric";
+import { API_BASE, setAuth } from "../../utils/auth";
 import StepActions from "../common/step-actions";
 
 function isAtLeast18(dateStr) {
@@ -284,11 +287,14 @@ function StepPersonalInfo({ onNext, onBack, values, onChange }) {
   );
 }
 
-function StepAdditionalInfo({ onBack, values, onChange }) {
-  function handleCreateAccount() {
-    // TODO: submit registration
-  }
-
+function StepAdditionalInfo({
+  onBack,
+  values,
+  onChange,
+  onSubmit,
+  error,
+  loading,
+}) {
   return (
     <form className="flex h-full flex-col gap-4">
       <h2 className="flex items-center gap-2 text-2xl font-bold">
@@ -304,10 +310,17 @@ function StepAdditionalInfo({ onBack, values, onChange }) {
         value={values.additionalInfo}
         onChange={onChange}
       />
+      {error && (
+        <div className="alert alert-error">
+          <FaExclamationTriangle />
+          <span>{error}</span>
+        </div>
+      )}
       <StepActions
-        onNext={handleCreateAccount}
+        onNext={onSubmit}
         onBack={onBack}
-        nextLabel="Create Account"
+        nextLabel={loading ? "Creating..." : "Create Account"}
+        disabled={loading}
       />
     </form>
   );
@@ -326,6 +339,9 @@ function RegisterForm() {
     weight: "",
     additionalInfo: "",
   });
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   function handleChange(e) {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -337,6 +353,43 @@ function RegisterForm() {
 
   function prevStep() {
     setStep((s) => s - 1);
+  }
+
+  async function handleCreateAccount() {
+    setError(null);
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/auth/register`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: form.email,
+          password: form.password,
+          firstName: form.firstName,
+          lastName: form.lastName,
+          dateOfBirth: form.dateOfBirth,
+          height: parseFloat(form.height),
+          weight: parseFloat(form.weight),
+          additionalMedicalInfo: form.additionalInfo,
+        }),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok) {
+        setError(json?.message || `Registration failed (HTTP ${res.status})`);
+        return;
+      }
+      if (!json?.data) {
+        setError("Registration failed: invalid server response");
+        return;
+      }
+      setAuth(json.data);
+      document.getElementById("register-modal").close();
+      navigate("/profile");
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -365,6 +418,9 @@ function RegisterForm() {
           onBack={prevStep}
           values={form}
           onChange={handleChange}
+          onSubmit={handleCreateAccount}
+          error={error}
+          loading={loading}
         />
       )}
     </div>
