@@ -6,4 +6,5 @@
 /.react-router/
 /build/
 
+# Photo assets
 /public/*.jpg
