@@ -53,7 +53,7 @@ function StatusBadge({ status }) {
   return <span className={`badge ${cls}`}>{label}</span>;
 }
 
-function StepUpload({ files, onFilesChange, onNext }) {
+function StepUpload({ files, onFilesChange, onNext, initialBodyPart }) {
   const inputRef = useRef(null);
 
   function handleChange(e) {
@@ -71,7 +71,7 @@ function StepUpload({ files, onFilesChange, onNext }) {
         .map((f) => ({
           file: f,
           preview: URL.createObjectURL(f),
-          bodyPart: "",
+          bodyPart: initialBodyPart,
           imageType: "",
         }));
       return [...prev, ...fresh];
@@ -384,7 +384,11 @@ function PostSubmitPanel({ scan, onClose }) {
   );
 }
 
-function CreateScanForm({ onScanCreated }) {
+function CreateScanForm({
+  onScanCreated,
+  initialBodyPart,
+  selectedRegionName,
+}) {
   const [step, setStep] = useState(0);
   const [files, setFiles] = useState([]);
   const [notes, setNotes] = useState("");
@@ -455,6 +459,16 @@ function CreateScanForm({ onScanCreated }) {
       </ul>
 
       <div className="flex flex-1 flex-col">
+        {selectedRegionName && (
+          <div className="alert alert-info mb-2">
+            <FaRobot />
+            <span>
+              Starting from <strong>{selectedRegionName}</strong>. New uploads
+              will be prefilled with <strong>{initialBodyPart}</strong>.
+            </span>
+          </div>
+        )}
+
         {error && (
           <div className="alert alert-error mb-2">
             <FaTimesCircle />
@@ -466,6 +480,7 @@ function CreateScanForm({ onScanCreated }) {
           <StepUpload
             files={files}
             onFilesChange={setFiles}
+            initialBodyPart={initialBodyPart}
             onNext={() => setStep(1)}
           />
         )}
@@ -492,7 +507,11 @@ function CreateScanForm({ onScanCreated }) {
   );
 }
 
-export default function CreateScan({ onScanCreated }) {
+export default function CreateScan({
+  onScanCreated,
+  initialBodyPart = "",
+  selectedRegionName = "",
+}) {
   return (
     <dialog id="create-scan-modal" className="modal">
       <div className="modal-box relative max-w-3xl overflow-hidden p-0">
@@ -502,7 +521,11 @@ export default function CreateScan({ onScanCreated }) {
           </button>
         </form>
         <div className="min-h-160">
-          <CreateScanForm onScanCreated={onScanCreated} />
+          <CreateScanForm
+            onScanCreated={onScanCreated}
+            initialBodyPart={initialBodyPart}
+            selectedRegionName={selectedRegionName}
+          />
         </div>
       </div>
     </dialog>
