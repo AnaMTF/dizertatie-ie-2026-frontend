@@ -1,10 +1,7 @@
 import { useEffect, useState } from "react";
-import { DayPicker } from "react-day-picker";
 import { FaCalendarPlus, FaRobot, FaUserEdit } from "react-icons/fa";
 import { Link, redirect, useLoaderData } from "react-router";
-import { getToken, getUser } from "../utils/auth";
-
-const API_BASE = "http://localhost:9000/api/v1";
+import { API_BASE, getToken, getUser } from "../utils/auth";
 
 export function clientLoader() {
   if (!getToken()) return redirect("/?login=true");
@@ -13,6 +10,18 @@ export function clientLoader() {
 
 function getAuthToken() {
   return getToken();
+}
+
+function toAppointmentDateTime(appointment) {
+  if (appointment.dateTime) {
+    return new Date(appointment.dateTime);
+  }
+
+  if (appointment.date && appointment.timeSlot) {
+    return new Date(`${appointment.date}T${appointment.timeSlot}:00`);
+  }
+
+  return null;
 }
 
 function InfoRow({ label, value }) {
@@ -115,14 +124,20 @@ function UpcomingAppointments() {
 
         const upcoming = (json.data ?? [])
           .filter((appointment) => {
-            const date = new Date(appointment.dateTime);
+            const date = toAppointmentDateTime(appointment);
+
+            if (!date || Number.isNaN(date.getTime())) {
+              return false;
+            }
+
             return (
               date.getTime() > Date.now() && appointment.status !== "cancelled"
             );
           })
           .sort(
             (a, b) =>
-              new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime(),
+              toAppointmentDateTime(a).getTime() -
+              toAppointmentDateTime(b).getTime(),
           )
           .slice(0, 3);
 
@@ -166,24 +181,35 @@ function UpcomingAppointments() {
                       ? `Dr. ${appointment.doctor.lastName}`
                       : "Assigned doctor"}
                   </p>
-                  <p className="text-base-content/50 text-xs">
-                    {new Date(appointment.dateTime).toLocaleDateString(
-                      "en-GB",
-                      {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      },
-                    )}{" "}
-                    at{" "}
-                    {new Date(appointment.dateTime).toLocaleTimeString(
-                      "en-GB",
-                      {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      },
-                    )}
-                  </p>
+                  {(() => {
+                    const appointmentDate = toAppointmentDateTime(appointment);
+
+                    if (
+                      !appointmentDate ||
+                      Number.isNaN(appointmentDate.getTime())
+                    ) {
+                      return (
+                        <p className="text-base-content/50 text-xs">
+                          Date unavailable
+                        </p>
+                      );
+                    }
+
+                    return (
+                      <p className="text-base-content/50 text-xs">
+                        {appointmentDate.toLocaleDateString("en-GB", {
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}{" "}
+                        at{" "}
+                        {appointmentDate.toLocaleTimeString("en-GB", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    );
+                  })()}
                 </div>
                 <StatusBadge status={appointment.status} />
               </div>
@@ -277,7 +303,15 @@ export default function Profile() {
           </div>
 
           <div className="flex w-full flex-col gap-4">
-            <DayPicker className="react-day-picker bg-base-200 rounded-box flex w-full justify-center p-4 shadow" />
+            <div className="card bg-base-200 shadow">
+              <div className="card-body p-4">
+                <h2 className="card-title text-sm">Appointment insights</h2>
+                <p className="text-base-content/60 text-sm">
+                  Upcoming appointments and recent scans are synced from backend
+                  data.
+                </p>
+              </div>
+            </div>
 
             <RecentScans />
 
