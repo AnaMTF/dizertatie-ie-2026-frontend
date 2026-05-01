@@ -36,10 +36,26 @@ const IMAGE_TYPES = [
   "Mammography",
 ];
 
+const IMAGE_TYPE_DESCRIPTIONS = {
+  "X-Ray": "Fast capture for chest studies, fractures, and routine screening.",
+  "CT Scan": "Cross-sectional imaging used for deeper structural review.",
+  MRI: "Soft-tissue focused imaging for brain, spine, and organ detail.",
+  Ultrasound: "Real-time imaging often used for abdomen and pelvic studies.",
+  "PET Scan": "Metabolic imaging used for advanced diagnostic assessment.",
+  Mammography: "Breast imaging workflow for screening and focused evaluation.",
+};
+
 const MAX_IMAGES_PER_SCAN = 4;
 
 const POLL_INTERVAL_MS = 5000;
 const MAX_POLL_ATTEMPTS = 24;
+
+function createInitialScanDetails(initialBodyPart = "") {
+  return {
+    bodyPart: initialBodyPart,
+    imageType: "",
+  };
+}
 
 function getAuthToken() {
   return getToken();
@@ -102,7 +118,114 @@ function StatusBadge({ status }) {
   return <span className={`badge ${cls}`}>{label}</span>;
 }
 
-function StepUpload({ files, onFilesChange, onNext, initialBodyPart }) {
+function ScanContextBanner({ imageType, selectedRegionName, initialBodyPart }) {
+  if (!imageType && !selectedRegionName && !initialBodyPart) {
+    return null;
+  }
+
+  return (
+    <div className="bg-base-200 rounded-box border-base-300 flex flex-wrap items-center gap-2 border px-4 py-3">
+      {imageType && (
+        <span className="badge badge-primary badge-outline">{imageType}</span>
+      )}
+      {selectedRegionName && (
+        <span className="badge badge-outline">
+          Region: {selectedRegionName}
+        </span>
+      )}
+      {initialBodyPart && (
+        <span className="badge badge-outline">
+          Suggested area: {initialBodyPart}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function StepImageType({ imageType, onScanDetailsChange, onNext }) {
+  return (
+    <div className="flex h-full flex-col gap-5">
+      <div>
+        <h2 className="flex items-center gap-2 text-2xl font-bold">
+          <FaListAlt /> Choose image type first
+        </h2>
+        <p className="text-base-content/60 text-sm">
+          This scan can contain multiple files, but they must all use the same
+          imaging modality. Pick that first, then move to upload.
+        </p>
+      </div>
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        {IMAGE_TYPES.map((type) => {
+          const isSelected = imageType === type;
+
+          return (
+            <button
+              key={type}
+              type="button"
+              onClick={() =>
+                onScanDetailsChange((prev) => ({
+                  ...prev,
+                  imageType: type,
+                }))
+              }
+              className={[
+                "rounded-box border p-4 text-left transition",
+                isSelected
+                  ? "border-primary bg-primary text-primary-content shadow-sm"
+                  : "border-base-300 bg-base-200 hover:border-base-content/30",
+              ].join(" ")}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="font-semibold">{type}</p>
+                  <p
+                    className={[
+                      "mt-1 text-sm",
+                      isSelected
+                        ? "text-primary-content/80"
+                        : "text-base-content/60",
+                    ].join(" ")}
+                  >
+                    {IMAGE_TYPE_DESCRIPTIONS[type]}
+                  </p>
+                </div>
+                {isSelected && (
+                  <span className="badge badge-neutral">Selected</span>
+                )}
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="alert alert-info">
+        <FaRobot />
+        <span>
+          Upload stays locked until an image type is selected. Once chosen, the
+          next step is file upload.
+        </span>
+      </div>
+
+      <StepActions
+        onNext={onNext}
+        nextLabel="Continue to upload"
+        disabled={!imageType}
+        tooltipMessage="Choose the image type before continuing"
+      />
+    </div>
+  );
+}
+
+function StepUpload({
+  files,
+  imageType,
+  initialBodyPart,
+  selectedRegionName,
+  onFilesChange,
+  onNext,
+  onBack,
+}) {
   const inputRef = useRef(null);
 
   function handleChange(e) {
@@ -120,8 +243,6 @@ function StepUpload({ files, onFilesChange, onNext, initialBodyPart }) {
         .map((f) => ({
           file: f,
           preview: URL.createObjectURL(f),
-          bodyPart: initialBodyPart,
-          imageType: "",
         }));
       return [...prev, ...fresh];
     });
@@ -137,21 +258,47 @@ function StepUpload({ files, onFilesChange, onNext, initialBodyPart }) {
 
   return (
     <div className="flex h-full flex-col gap-4">
-      <h2 className="flex items-center gap-2 text-2xl font-bold">
-        <FaCloudUploadAlt /> Upload images
-      </h2>
-      <p className="text-base-content/60 text-sm">
-        Select one or more medical images to analyse. You can add more before
-        submitting, up to {MAX_IMAGES_PER_SCAN} images.
-      </p>
+      <div className="flex flex-col gap-2">
+        <h2 className="flex items-center gap-2 text-2xl font-bold">
+          <FaCloudUploadAlt /> Upload images
+        </h2>
+        <p className="text-base-content/60 text-sm">
+          Add one or more files for this <strong>{imageType}</strong> scan. You
+          can upload up to {MAX_IMAGES_PER_SCAN} images before continuing.
+        </p>
+      </div>
 
-      <button
-        type="button"
-        className="btn btn-outline w-full"
-        onClick={() => inputRef.current?.click()}
-      >
-        <FaCloudUploadAlt /> Choose images
-      </button>
+      <ScanContextBanner
+        imageType={imageType}
+        selectedRegionName={selectedRegionName}
+        initialBodyPart={initialBodyPart}
+      />
+
+      <div className="bg-base-200 rounded-box border-base-300 flex flex-col gap-4 border p-4">
+        <button
+          type="button"
+          className="rounded-box border-base-300 hover:border-primary hover:bg-base-100 flex min-h-40 w-full flex-col items-center justify-center gap-3 border border-dashed px-6 py-8 text-center transition"
+          onClick={() => inputRef.current?.click()}
+        >
+          <span className="bg-base-100 rounded-full p-4 text-xl">
+            <FaCloudUploadAlt />
+          </span>
+          <div>
+            <p className="text-lg font-semibold">Choose images</p>
+            <p className="text-base-content/60 text-sm">
+              Image files only. Duplicate file names are ignored automatically.
+            </p>
+          </div>
+        </button>
+
+        <div className="text-base-content/60 flex items-center justify-between text-xs">
+          <span>
+            {files.length} of {MAX_IMAGES_PER_SCAN} files selected
+          </span>
+          <span>Use Back to change the image type</span>
+        </div>
+      </div>
+
       <input
         ref={inputRef}
         type="file"
@@ -162,31 +309,45 @@ function StepUpload({ files, onFilesChange, onNext, initialBodyPart }) {
       />
 
       {files.length > 0 && (
-        <div className="grid grid-cols-3 gap-2 overflow-y-auto">
-          {files.map((item, i) => (
-            <div key={i} className="relative">
-              <img
-                src={item.preview}
-                alt={item.file.name}
-                className="bg-base-300 h-20 w-full rounded object-cover"
-              />
-              <button
-                type="button"
-                className="btn btn-xs btn-circle btn-error absolute top-1 right-1"
-                onClick={() => removeFile(i)}
-              >
-                ✕
-              </button>
-              <p className="text-base-content/60 truncate text-xs">
-                {item.file.name}
-              </p>
-            </div>
-          ))}
+        <div className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Selected files</h3>
+            <span className="badge badge-outline">{files.length} files</span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 overflow-y-auto md:grid-cols-3">
+            {files.map((item, i) => (
+              <div key={i} className="bg-base-200 relative rounded-xl p-2">
+                <img
+                  src={item.preview}
+                  alt={item.file.name}
+                  className="bg-base-300 h-24 w-full rounded-lg object-cover"
+                />
+                <button
+                  type="button"
+                  className="btn btn-xs btn-circle btn-error absolute top-1 right-1"
+                  onClick={() => removeFile(i)}
+                >
+                  ✕
+                </button>
+                <div className="mt-2">
+                  <p className="truncate text-xs font-medium">
+                    {item.file.name}
+                  </p>
+                  <p className="text-base-content/50 text-[0.7rem]">
+                    {imageType}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
       <StepActions
+        onBack={onBack}
         onNext={onNext}
+        nextLabel="Continue to review"
         disabled={files.length === 0}
         tooltipMessage="Upload at least one image to continue"
       />
@@ -194,118 +355,155 @@ function StepUpload({ files, onFilesChange, onNext, initialBodyPart }) {
   );
 }
 
-function StepCategorize({ files, onFilesChange, onNext, onBack }) {
-  function handleFieldChange(index, field, value) {
-    onFilesChange((prev) =>
-      prev.map((item, i) => (i === index ? { ...item, [field]: value } : item)),
-    );
-  }
-
-  const allCategorized = files.every((f) => f.bodyPart && f.imageType);
+function StepReview({
+  files,
+  scanDetails,
+  initialBodyPart,
+  selectedRegionName,
+  onScanDetailsChange,
+  onBack,
+  onSubmit,
+  submitting,
+}) {
+  const isReady = Boolean(scanDetails.bodyPart && scanDetails.imageType);
 
   return (
     <div className="flex h-full flex-col gap-4">
-      <h2 className="flex items-center gap-2 text-2xl font-bold">
-        <FaListAlt /> Categorise images
-      </h2>
-      <p className="text-base-content/60 text-sm">
-        For each image, select the body part and type of scan.
-      </p>
+      <div className="flex flex-col gap-2">
+        <h2 className="flex items-center gap-2 text-2xl font-bold">
+          <FaRobot /> Review &amp; submit
+        </h2>
+        <p className="text-base-content/60 text-sm">
+          Confirm the scan setup, choose the body area, and submit the upload
+          for AI analysis.
+        </p>
+      </div>
+
+      <ScanContextBanner
+        imageType={scanDetails.imageType}
+        selectedRegionName={selectedRegionName}
+        initialBodyPart={initialBodyPart}
+      />
 
       <div className="flex flex-1 flex-col gap-3 overflow-y-auto">
-        {files.map((item, i) => (
-          <div
-            key={i}
-            className="bg-base-200 flex items-center gap-3 rounded-xl p-3"
-          >
-            <img
-              src={item.preview}
-              alt={item.file.name}
-              className="bg-base-300 h-14 w-14 shrink-0 rounded object-cover"
-            />
-            <div className="flex min-w-0 flex-1 flex-col gap-2">
-              <p className="truncate text-sm font-medium">{item.file.name}</p>
-              <div className="flex gap-2">
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+          <div className="bg-base-200 rounded-box border-base-300 border p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold">
+                  Files ready for analysis
+                </h3>
+                <p className="text-base-content/60 text-xs">
+                  Review the uploaded images before submitting.
+                </p>
+              </div>
+              <span className="badge badge-outline">{files.length} files</span>
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {files.map((item, i) => (
+                <div
+                  key={i}
+                  className="bg-base-100 rounded-box border-base-300 flex items-center gap-3 border p-2"
+                >
+                  <img
+                    src={item.preview}
+                    alt={item.file.name}
+                    className="bg-base-300 h-14 w-14 shrink-0 rounded-lg object-cover"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium">
+                      {item.file.name}
+                    </p>
+                    <p className="text-base-content/50 text-xs">
+                      {scanDetails.imageType}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="bg-base-200 rounded-box border-base-300 border p-4">
+            <div>
+              <h3 className="text-sm font-semibold">Scan setup</h3>
+              <p className="text-base-content/60 text-xs">
+                The image type is fixed. Choose the body area for the full scan.
+              </p>
+            </div>
+
+            <div className="mt-4 flex flex-col gap-4">
+              <div className="bg-base-100 rounded-box border-base-300 border p-3">
+                <p className="text-base-content/60 text-xs uppercase">
+                  Image type
+                </p>
+                <p className="mt-1 text-base font-semibold">
+                  {scanDetails.imageType}
+                </p>
+                <p className="text-base-content/50 mt-2 text-xs">
+                  If this is wrong, go back before submitting.
+                </p>
+              </div>
+
+              <label className="form-control gap-2">
+                <span className="label-text text-sm font-medium">
+                  Body area
+                </span>
                 <select
-                  className="select select-sm flex-1"
-                  value={item.bodyPart}
+                  className="select w-full"
+                  value={scanDetails.bodyPart}
                   onChange={(e) =>
-                    handleFieldChange(i, "bodyPart", e.target.value)
+                    onScanDetailsChange((prev) => ({
+                      ...prev,
+                      bodyPart: e.target.value,
+                    }))
                   }
                 >
-                  <option value="">Body part…</option>
+                  <option value="">Select body area…</option>
                   {BODY_PARTS.map((bp) => (
                     <option key={bp} value={bp}>
                       {bp}
                     </option>
                   ))}
                 </select>
-                <select
-                  className="select select-sm flex-1"
-                  value={item.imageType}
-                  onChange={(e) =>
-                    handleFieldChange(i, "imageType", e.target.value)
-                  }
-                >
-                  <option value="">Image type…</option>
-                  {IMAGE_TYPES.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
+                {selectedRegionName &&
+                  initialBodyPart &&
+                  scanDetails.bodyPart === initialBodyPart && (
+                    <p className="text-base-content/60 text-xs">
+                      Suggested from {selectedRegionName}.
+                    </p>
+                  )}
+              </label>
+
+              <div className="bg-base-100 rounded-box border-base-300 border p-3">
+                <p className="text-base-content/60 text-xs uppercase">
+                  Submission summary
+                </p>
+                <p className="mt-1 text-sm leading-relaxed">
+                  {files.length} image{files.length === 1 ? "" : "s"} will be
+                  processed as <strong>{scanDetails.imageType}</strong>
+                  {scanDetails.bodyPart ? (
+                    <>
+                      {" "}
+                      for <strong>{scanDetails.bodyPart}</strong>
+                    </>
+                  ) : (
+                    <> after you choose a body area</>
+                  )}
+                  .
+                </p>
               </div>
             </div>
           </div>
-        ))}
+        </div>
       </div>
 
       <StepActions
-        onNext={onNext}
         onBack={onBack}
-        disabled={!allCategorized}
-        tooltipMessage="All images must have a body part and image type"
-      />
-    </div>
-  );
-}
-
-function StepReview({ files, onBack, onSubmit, submitting }) {
-  return (
-    <div className="flex h-full flex-col gap-4">
-      <h2 className="flex items-center gap-2 text-2xl font-bold">
-        <FaRobot /> Review &amp; submit
-      </h2>
-      <p className="text-base-content/60 text-sm">
-        Check your images before sending them for AI analysis.
-      </p>
-
-      <div className="flex flex-col gap-2 overflow-y-auto">
-        {files.map((item, i) => (
-          <div
-            key={i}
-            className="bg-base-200 flex items-center gap-3 rounded-xl px-3 py-2"
-          >
-            <img
-              src={item.preview}
-              alt={item.file.name}
-              className="bg-base-300 h-10 w-10 shrink-0 rounded object-cover"
-            />
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium">{item.file.name}</p>
-              <p className="text-base-content/50 text-xs">
-                {item.bodyPart} &mdash; {item.imageType}
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <StepActions
         onNext={onSubmit}
-        onBack={onBack}
         nextLabel={submitting ? "Submitting…" : "Submit for analysis"}
-        disabled={submitting}
+        disabled={!isReady || submitting}
+        tooltipMessage="Choose the body area before submitting"
       />
     </div>
   );
@@ -481,25 +679,36 @@ function CreateScanForm({
 }) {
   const [step, setStep] = useState(0);
   const [files, setFiles] = useState([]);
+  const [scanDetails, setScanDetails] = useState(() =>
+    createInitialScanDetails(initialBodyPart),
+  );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [createdScan, setCreatedScan] = useState(null);
+
+  useEffect(() => {
+    setScanDetails((prev) => {
+      if (prev.bodyPart || !initialBodyPart) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        bodyPart: initialBodyPart,
+      };
+    });
+  }, [initialBodyPart]);
 
   async function handleSubmit() {
     setSubmitting(true);
     setError(null);
     try {
-      const metadata = files.map((item) => ({
-        fileName: item.file.name,
-        bodyPart: item.bodyPart,
-        imageType: item.imageType,
-      }));
       const formData = new FormData();
 
       files.forEach((item) => {
         formData.append("images", item.file);
       });
-      formData.append("metadata", JSON.stringify(metadata));
+      formData.append("metadata", JSON.stringify(scanDetails));
 
       const res = await fetch(`${API_BASE}/scan`, {
         method: "POST",
@@ -530,6 +739,7 @@ function CreateScanForm({
   function reset() {
     files.forEach((f) => URL.revokeObjectURL(f.preview));
     setFiles([]);
+    setScanDetails(createInitialScanDetails(initialBodyPart));
     setStep(0);
     setError(null);
     setCreatedScan(null);
@@ -551,24 +761,12 @@ function CreateScanForm({
   return (
     <div className="bg-base-100 text-base-content flex h-full flex-col gap-4 p-10">
       <ul className="steps mb-2 w-full">
-        <li className={`step ${step >= 0 ? "step-primary" : ""}`}>Upload</li>
-        <li className={`step ${step >= 1 ? "step-primary" : ""}`}>
-          Categorise
-        </li>
+        <li className={`step ${step >= 0 ? "step-primary" : ""}`}>Type</li>
+        <li className={`step ${step >= 1 ? "step-primary" : ""}`}>Upload</li>
         <li className={`step ${step >= 2 ? "step-primary" : ""}`}>Review</li>
       </ul>
 
       <div className="flex flex-1 flex-col">
-        {selectedRegionName && (
-          <div className="alert alert-info mb-2">
-            <FaRobot />
-            <span>
-              Starting from <strong>{selectedRegionName}</strong>. New uploads
-              will be prefilled with <strong>{initialBodyPart}</strong>.
-            </span>
-          </div>
-        )}
-
         {error && (
           <div className="alert alert-error mb-2">
             <FaTimesCircle />
@@ -577,16 +775,18 @@ function CreateScanForm({
         )}
 
         {step === 0 && (
-          <StepUpload
-            files={files}
-            onFilesChange={setFiles}
-            initialBodyPart={initialBodyPart}
+          <StepImageType
+            imageType={scanDetails.imageType}
+            onScanDetailsChange={setScanDetails}
             onNext={() => setStep(1)}
           />
         )}
         {step === 1 && (
-          <StepCategorize
+          <StepUpload
             files={files}
+            imageType={scanDetails.imageType}
+            initialBodyPart={initialBodyPart}
+            selectedRegionName={selectedRegionName}
             onFilesChange={setFiles}
             onNext={() => setStep(2)}
             onBack={() => setStep(0)}
@@ -595,6 +795,10 @@ function CreateScanForm({
         {step === 2 && (
           <StepReview
             files={files}
+            scanDetails={scanDetails}
+            initialBodyPart={initialBodyPart}
+            selectedRegionName={selectedRegionName}
+            onScanDetailsChange={setScanDetails}
             onBack={() => setStep(1)}
             onSubmit={handleSubmit}
             submitting={submitting}
@@ -612,7 +816,7 @@ export default function CreateScan({
 }) {
   return (
     <dialog id="create-scan-modal" className="modal">
-      <div className="modal-box relative max-w-3xl overflow-hidden p-0">
+      <div className="modal-box relative max-w-5xl overflow-hidden p-0">
         <form method="dialog">
           <button className="btn btn-sm btn-circle btn-ghost absolute top-2 right-2 z-10">
             ✕

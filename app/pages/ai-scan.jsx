@@ -303,18 +303,15 @@ function StatusBadge({ status }) {
   return <span className={`badge ${cls}`}>{label}</span>;
 }
 
-function TopBar({ onNewScan }) {
+function TopBar() {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div>
       <div>
         <h1 className="text-2xl font-bold tracking-tight">AI Scans</h1>
         <p className="text-base-content/50 text-sm">
           Upload medical images for AI-powered analysis
         </p>
       </div>
-      <button className="btn btn-primary" onClick={onNewScan}>
-        <FaPlus /> New Scan
-      </button>
     </div>
   );
 }
@@ -356,7 +353,8 @@ function ScanConfigurator({ selectedOrgan, onSelectOrgan, onStartScan }) {
               <div className="stat-title">Upload support</div>
               <div className="stat-value text-lg">Up to 4 images</div>
               <div className="stat-desc">
-                Categorise each image before submitting it for processing.
+                Every image in one scan shares the same body area and image
+                type.
               </div>
             </div>
           </div>
@@ -404,7 +402,8 @@ function ScansTable({ scans, loading, error, onRefresh }) {
             <tr>
               <th>Date</th>
               <th>Images</th>
-              <th>Body parts</th>
+              <th>Body area</th>
+              <th>Image type</th>
               <th>Status</th>
               <th>Results</th>
             </tr>
@@ -412,21 +411,21 @@ function ScansTable({ scans, loading, error, onRefresh }) {
           <tbody>
             {!loading && error && (
               <tr>
-                <td colSpan={5} className="text-error px-4 py-6 text-center">
+                <td colSpan={6} className="text-error px-4 py-6 text-center">
                   {error}
                 </td>
               </tr>
             )}
             {loading && (
               <tr>
-                <td colSpan={5} className="text-base-content/40 text-center">
+                <td colSpan={6} className="text-base-content/40 text-center">
                   Loading…
                 </td>
               </tr>
             )}
             {!loading && !error && scans.length === 0 && (
               <tr>
-                <td colSpan={5} className="text-base-content/40 text-center">
+                <td colSpan={6} className="text-base-content/40 text-center">
                   No scans yet. Click &ldquo;New Scan&rdquo; to get started.
                 </td>
               </tr>
@@ -444,17 +443,22 @@ function ScansTable({ scans, loading, error, onRefresh }) {
                   </td>
                   <td>{scan.images?.length ?? 0}</td>
                   <td>
-                    <div className="flex flex-wrap gap-1">
-                      {[
-                        ...new Set(
-                          scan.images?.map((img) => img.bodyPart) ?? [],
-                        ),
-                      ].map((bp) => (
-                        <span key={bp} className="badge badge-outline badge-sm">
-                          {bp}
-                        </span>
-                      ))}
-                    </div>
+                    {scan.bodyPart ? (
+                      <span className="badge badge-outline badge-sm">
+                        {scan.bodyPart}
+                      </span>
+                    ) : (
+                      <span className="text-base-content/30 text-sm">—</span>
+                    )}
+                  </td>
+                  <td>
+                    {scan.imageType ? (
+                      <span className="badge badge-outline badge-sm">
+                        {scan.imageType}
+                      </span>
+                    ) : (
+                      <span className="text-base-content/30 text-sm">—</span>
+                    )}
                   </td>
                   <td>
                     <StatusBadge status={scan.status} />
@@ -520,7 +524,9 @@ function Sidebar({ scans }) {
               professional medical advice.
             </li>
             <li>Upload clear, high-quality images for best results.</li>
-            <li>You can upload multiple images per scan session.</li>
+            <li>
+              Each scan can include multiple files under one shared category.
+            </li>
           </ul>
         </div>
       </div>
@@ -573,7 +579,7 @@ export default function AiScan() {
 
   return (
     <div className="flex h-full flex-col gap-6 px-6 py-6 lg:px-9">
-      <TopBar onNewScan={handleNewScan} />
+      <TopBar />
       <ScanConfigurator
         selectedOrgan={selectedOrgan}
         onSelectOrgan={setSelectedOrgan}
