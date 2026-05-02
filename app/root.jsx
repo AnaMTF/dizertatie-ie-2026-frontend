@@ -53,6 +53,16 @@ export default function App() {
     };
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined" || !("serviceWorker" in navigator)) {
+      return;
+    }
+
+    navigator.serviceWorker.register("/sw.js").catch(() => {
+      // silently fail; app can still work without push
+    });
+  }, []);
+
   return (
     <>
       <Navbar user={currentUser} />

@@ -42,48 +42,44 @@ function getScanImageRows(scan) {
       ? results.errors
       : [];
   const submittedImages = Array.isArray(scan?.images) ? scan.images : [];
+  const submittedIndexByUuid = new Map();
 
-  const predictionByUuid = new Map(
-    resultImages
-      .filter((item) => item?.imageUuid)
-      .map((item) => [item.imageUuid, item]),
-  );
-  const errorByUuid = new Map(
-    resultErrors
-      .filter((item) => item?.imageUuid)
-      .map((item) => [item.imageUuid, item]),
-  );
-
-  if (submittedImages.length > 0) {
-    return submittedImages.map((submittedImage, index) => {
-      const imageUuid =
-        submittedImage?.imageUuid || submittedImage?.uuid || submittedImage?.id;
-      const predictionRow = imageUuid
-        ? predictionByUuid.get(imageUuid)
-        : resultImages[index];
-      const errorRow = imageUuid ? errorByUuid.get(imageUuid) : resultErrors[index];
-
-      return {
-        key: imageUuid || `image-${index + 1}`,
-        index: index + 1,
-        imageUuid,
-        modelKey: predictionRow?.modelKey || null,
-        routeKey: predictionRow?.routeKey || null,
-        label: predictionRow?.prediction?.label || null,
-        confidence: predictionRow?.prediction?.confidence,
-        error: errorRow?.error || null,
-      };
-    });
-  }
+  submittedImages.forEach((submittedImage, index) => {
+    const imageUuid =
+      submittedImage?.imageUuid || submittedImage?.uuid || submittedImage?.id;
+    if (imageUuid) {
+      submittedIndexByUuid.set(imageUuid, index + 1);
+    }
+  });
 
   if (resultImages.length > 0 || resultErrors.length > 0) {
-    const byUuid = new Map();
+    const byResultKey = new Map();
+
+    function getResultKey(item, fallbackPrefix, index) {
+      const imageUuid = item?.imageUuid || null;
+      const modelKey = item?.modelKey || "unknown_model";
+      const routeKey = item?.routeKey || "unknown_route";
+
+      if (!imageUuid) {
+        return `${fallbackPrefix}-${index + 1}::${modelKey}::${routeKey}`;
+      }
+
+      return `${imageUuid}::${modelKey}::${routeKey}`;
+    }
+
+    function getImageIndex(imageUuid, fallbackIndex) {
+      if (imageUuid && submittedIndexByUuid.has(imageUuid)) {
+        return submittedIndexByUuid.get(imageUuid);
+      }
+
+      return fallbackIndex + 1;
+    }
 
     resultImages.forEach((item, index) => {
-      const key = item?.imageUuid || `result-${index + 1}`;
-      byUuid.set(key, {
+      const key = getResultKey(item, "result", index);
+      byResultKey.set(key, {
         key,
-        index: byUuid.size + 1,
+        index: getImageIndex(item?.imageUuid || null, index),
         imageUuid: item?.imageUuid || null,
         modelKey: item?.modelKey || null,
         routeKey: item?.routeKey || null,
@@ -94,17 +90,17 @@ function getScanImageRows(scan) {
     });
 
     resultErrors.forEach((item, index) => {
-      const key = item?.imageUuid || `error-${index + 1}`;
-      const current = byUuid.get(key);
+      const key = getResultKey(item, "error", index);
+      const current = byResultKey.get(key);
       if (current) {
         current.error = item?.error || null;
       } else {
-        byUuid.set(key, {
+        byResultKey.set(key, {
           key,
-          index: byUuid.size + 1,
+          index: getImageIndex(item?.imageUuid || null, index),
           imageUuid: item?.imageUuid || null,
-          modelKey: null,
-          routeKey: null,
+          modelKey: item?.modelKey || null,
+          routeKey: item?.routeKey || null,
           label: null,
           confidence: null,
           error: item?.error || null,
@@ -112,7 +108,33 @@ function getScanImageRows(scan) {
       }
     });
 
-    return Array.from(byUuid.values());
+    return Array.from(byResultKey.values()).sort((left, right) => {
+      if (left.index !== right.index) {
+        return left.index - right.index;
+      }
+
+      return String(left.modelKey || "").localeCompare(
+        String(right.modelKey || ""),
+      );
+    });
+  }
+
+  if (submittedImages.length > 0) {
+    return submittedImages.map((submittedImage, index) => {
+      const imageUuid =
+        submittedImage?.imageUuid || submittedImage?.uuid || submittedImage?.id;
+
+      return {
+        key: imageUuid || `image-${index + 1}`,
+        index: index + 1,
+        imageUuid,
+        modelKey: null,
+        routeKey: null,
+        label: null,
+        confidence: null,
+        error: null,
+      };
+    });
   }
 
   return [];
@@ -597,17 +619,24 @@ function ScanResultsModal({ scan, onClose }) {
           {groupedImageRows.length > 0 ? (
             <div className="flex flex-col gap-4">
               {groupedImageRows.map((group) => {
-                const predicted = group.images.filter((image) => image.label).length;
-                const failed = group.images.filter((image) => image.error).length;
+                const predicted = group.images.filter(
+                  (image) => image.label,
+                ).length;
+                const failed = group.images.filter(
+                  (image) => image.error,
+                ).length;
 
                 return (
-                  <div key={group.modelKey} className="bg-base-200 rounded-box p-4">
+                  <div
+                    key={group.modelKey}
+                    className="bg-base-200 rounded-box p-4"
+                  >
                     <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                       <div>
                         <p className="text-base-content/50 text-xs uppercase">
                           Model
                         </p>
-                        <p className="text-lg font-bold leading-tight">
+                        <p className="text-lg leading-tight font-bold">
                           {group.modelKey}
                         </p>
                         {group.routeKey && (
@@ -626,14 +655,19 @@ function ScanResultsModal({ scan, onClose }) {
                           </span>
                         )}
                         {failed > 0 && (
-                          <span className="badge badge-error">{failed} failed</span>
+                          <span className="badge badge-error">
+                            {failed} failed
+                          </span>
                         )}
                       </div>
                     </div>
 
                     <div className="grid gap-3 md:grid-cols-2">
                       {group.images.map((imageRow) => (
-                        <div key={imageRow.key} className="bg-base-100 rounded-box p-4">
+                        <div
+                          key={imageRow.key}
+                          className="bg-base-100 rounded-box p-4"
+                        >
                           <div className="flex items-start justify-between gap-3">
                             <div>
                               <p className="text-base-content/50 text-xs uppercase">
@@ -661,7 +695,7 @@ function ScanResultsModal({ scan, onClose }) {
                                 <p className="text-base-content/50 text-xs uppercase">
                                   Label
                                 </p>
-                                <p className="text-xl font-bold leading-tight">
+                                <p className="text-xl leading-tight font-bold">
                                   {imageRow.label}
                                 </p>
                               </div>
@@ -669,7 +703,7 @@ function ScanResultsModal({ scan, onClose }) {
                                 <p className="text-base-content/50 text-xs uppercase">
                                   Confidence
                                 </p>
-                                <p className="text-xl font-bold leading-tight">
+                                <p className="text-xl leading-tight font-bold">
                                   {formatConfidence(imageRow.confidence)}
                                 </p>
                               </div>

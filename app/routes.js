@@ -7,4 +7,5 @@ export default [
   route("/profile", "pages/profile.jsx"),
   route("/appointments", "pages/appointments.jsx"),
   route("/ai-scan", "pages/ai-scan.jsx"),
+  route("/notifications", "pages/notifications.jsx"),
 ];
