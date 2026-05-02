@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { FaPlus, FaRobot, FaSyncAlt } from "react-icons/fa";
+import { FaEye, FaPlus, FaRobot, FaSyncAlt } from "react-icons/fa";
 import { redirect } from "react-router";
 import CreateScan from "../components/scans/create-scan";
 import { API_BASE, getToken, getUser } from "../utils/auth";
@@ -23,29 +23,163 @@ function extractErrorMessage(error) {
   return "Something went wrong";
 }
 
-function formatScanResults(results) {
-  if (!results) {
+function formatConfidence(value) {
+  if (typeof value !== "number" || Number.isNaN(value)) {
     return "—";
   }
 
-  if (typeof results === "string") {
-    return results;
+  return `${(value * 100).toFixed(2)}%`;
+}
+
+function getScanImageRows(scan) {
+  const results = scan?.results;
+  const resultImages =
+    results && typeof results === "object" && Array.isArray(results.images)
+      ? results.images
+      : [];
+  const resultErrors =
+    results && typeof results === "object" && Array.isArray(results.errors)
+      ? results.errors
+      : [];
+  const submittedImages = Array.isArray(scan?.images) ? scan.images : [];
+
+  const predictionByUuid = new Map(
+    resultImages
+      .filter((item) => item?.imageUuid)
+      .map((item) => [item.imageUuid, item]),
+  );
+  const errorByUuid = new Map(
+    resultErrors
+      .filter((item) => item?.imageUuid)
+      .map((item) => [item.imageUuid, item]),
+  );
+
+  if (submittedImages.length > 0) {
+    return submittedImages.map((submittedImage, index) => {
+      const imageUuid =
+        submittedImage?.imageUuid || submittedImage?.uuid || submittedImage?.id;
+      const predictionRow = imageUuid
+        ? predictionByUuid.get(imageUuid)
+        : resultImages[index];
+      const errorRow = imageUuid ? errorByUuid.get(imageUuid) : resultErrors[index];
+
+      return {
+        key: imageUuid || `image-${index + 1}`,
+        index: index + 1,
+        imageUuid,
+        modelKey: predictionRow?.modelKey || null,
+        routeKey: predictionRow?.routeKey || null,
+        label: predictionRow?.prediction?.label || null,
+        confidence: predictionRow?.prediction?.confidence,
+        error: errorRow?.error || null,
+      };
+    });
   }
 
-  if (typeof results.summary === "string" && results.summary.trim()) {
-    return results.summary;
+  if (resultImages.length > 0 || resultErrors.length > 0) {
+    const byUuid = new Map();
+
+    resultImages.forEach((item, index) => {
+      const key = item?.imageUuid || `result-${index + 1}`;
+      byUuid.set(key, {
+        key,
+        index: byUuid.size + 1,
+        imageUuid: item?.imageUuid || null,
+        modelKey: item?.modelKey || null,
+        routeKey: item?.routeKey || null,
+        label: item?.prediction?.label || null,
+        confidence: item?.prediction?.confidence,
+        error: null,
+      });
+    });
+
+    resultErrors.forEach((item, index) => {
+      const key = item?.imageUuid || `error-${index + 1}`;
+      const current = byUuid.get(key);
+      if (current) {
+        current.error = item?.error || null;
+      } else {
+        byUuid.set(key, {
+          key,
+          index: byUuid.size + 1,
+          imageUuid: item?.imageUuid || null,
+          modelKey: null,
+          routeKey: null,
+          label: null,
+          confidence: null,
+          error: item?.error || null,
+        });
+      }
+    });
+
+    return Array.from(byUuid.values());
   }
 
-  const firstEntry = Object.entries(results).find(([, value]) => value != null);
+  return [];
+}
 
-  if (!firstEntry) {
-    return "Analysis complete";
+function getScanResultsSummary(scan) {
+  const rows = getScanImageRows(scan);
+
+  if (rows.length === 0) {
+    return "Result available";
   }
 
-  const [key, value] = firstEntry;
-  return typeof value === "string"
-    ? `${key}: ${value}`
-    : `${key}: ${JSON.stringify(value)}`;
+  const predicted = rows.filter((row) => row.label).length;
+  const failed = rows.filter((row) => row.error).length;
+
+  if (predicted > 0 && failed > 0) {
+    return `${predicted} predicted, ${failed} failed`;
+  }
+
+  if (predicted > 0) {
+    return `${predicted} predictions ready`;
+  }
+
+  if (failed > 0) {
+    return `${failed} failed`;
+  }
+
+  return "Processing";
+}
+
+function groupScanImageRowsByModel(imageRows) {
+  const groups = new Map();
+
+  imageRows.forEach((imageRow) => {
+    const modelName = imageRow.modelKey || "unknown_model";
+    if (!groups.has(modelName)) {
+      groups.set(modelName, {
+        modelKey: modelName,
+        routeKey: imageRow.routeKey || null,
+        images: [],
+      });
+    }
+
+    groups.get(modelName).images.push(imageRow);
+  });
+
+  return Array.from(groups.values());
+}
+
+function formatProcessedAt(value) {
+  if (!value) {
+    return "—";
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 const ANATOMICAL_REGIONS = [
@@ -383,7 +517,196 @@ function ScanConfigurator({ selectedOrgan, onSelectOrgan, onStartScan }) {
   );
 }
 
-function ScansTable({ scans, loading, error, onRefresh }) {
+function ScanResultsModal({ scan, onClose }) {
+  const results = scan?.results;
+  const hasStructuredResults = results && typeof results === "object";
+  const imageRows = getScanImageRows(scan);
+  const groupedImageRows = groupScanImageRowsByModel(imageRows);
+
+  return (
+    <dialog id="scan-results-modal" className="modal" onClose={onClose}>
+      <div className="modal-box max-w-4xl">
+        <form method="dialog">
+          <button className="btn btn-sm btn-circle btn-ghost absolute top-2 right-2">
+            ✕
+          </button>
+        </form>
+
+        <div className="flex flex-col gap-5">
+          <div>
+            <h3 className="text-lg font-bold">Scan result</h3>
+            <p className="text-base-content/60 text-sm">
+              Prediction summary for each submitted image.
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="bg-base-200 rounded-box p-3">
+              <p className="text-base-content/50 text-xs uppercase">Status</p>
+              <p className="mt-1">
+                <StatusBadge status={scan?.status || "unknown"} />
+              </p>
+            </div>
+            <div className="bg-base-200 rounded-box p-3">
+              <p className="text-base-content/50 text-xs uppercase">Images</p>
+              <p className="mt-1 font-semibold">{scan?.images?.length ?? 0}</p>
+            </div>
+            <div className="bg-base-200 rounded-box p-3">
+              <p className="text-base-content/50 text-xs uppercase">
+                Processed at
+              </p>
+              <p className="mt-1 text-sm font-medium">
+                {formatProcessedAt(results?.processedAt)}
+              </p>
+            </div>
+          </div>
+
+          {hasStructuredResults && (
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="bg-base-200 rounded-box p-3">
+                <p className="text-base-content/50 text-xs uppercase">Total</p>
+                <p className="mt-1 font-semibold">{results.total ?? "—"}</p>
+              </div>
+              <div className="bg-base-200 rounded-box p-3">
+                <p className="text-base-content/50 text-xs uppercase">
+                  Processed
+                </p>
+                <p className="mt-1 font-semibold">{results.count ?? "—"}</p>
+              </div>
+              <div className="bg-base-200 rounded-box p-3">
+                <p className="text-base-content/50 text-xs uppercase">Failed</p>
+                <p className="mt-1 font-semibold">
+                  {results.failedCount ?? "—"}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {results?.error && (
+            <div className="alert alert-error">
+              <span>{results.error}</span>
+            </div>
+          )}
+
+          {results?.details && (
+            <div className="bg-base-200 rounded-box p-4 text-sm">
+              {results.details}
+            </div>
+          )}
+
+          {groupedImageRows.length > 0 ? (
+            <div className="flex flex-col gap-4">
+              {groupedImageRows.map((group) => {
+                const predicted = group.images.filter((image) => image.label).length;
+                const failed = group.images.filter((image) => image.error).length;
+
+                return (
+                  <div key={group.modelKey} className="bg-base-200 rounded-box p-4">
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="text-base-content/50 text-xs uppercase">
+                          Model
+                        </p>
+                        <p className="text-lg font-bold leading-tight">
+                          {group.modelKey}
+                        </p>
+                        {group.routeKey && (
+                          <p className="text-base-content/60 text-xs">
+                            Route: {group.routeKey}
+                          </p>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <span className="badge badge-outline">
+                          {group.images.length} images
+                        </span>
+                        {predicted > 0 && (
+                          <span className="badge badge-success">
+                            {predicted} predicted
+                          </span>
+                        )}
+                        {failed > 0 && (
+                          <span className="badge badge-error">{failed} failed</span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid gap-3 md:grid-cols-2">
+                      {group.images.map((imageRow) => (
+                        <div key={imageRow.key} className="bg-base-100 rounded-box p-4">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-base-content/50 text-xs uppercase">
+                                Image {imageRow.index}
+                              </p>
+                            </div>
+                            {imageRow.error ? (
+                              <span className="badge badge-error badge-sm">
+                                Failed
+                              </span>
+                            ) : imageRow.label ? (
+                              <span className="badge badge-success badge-sm">
+                                Predicted
+                              </span>
+                            ) : (
+                              <span className="badge badge-warning badge-sm">
+                                Pending
+                              </span>
+                            )}
+                          </div>
+
+                          {imageRow.label ? (
+                            <div className="mt-3 grid grid-cols-2 gap-3">
+                              <div>
+                                <p className="text-base-content/50 text-xs uppercase">
+                                  Label
+                                </p>
+                                <p className="text-xl font-bold leading-tight">
+                                  {imageRow.label}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-base-content/50 text-xs uppercase">
+                                  Confidence
+                                </p>
+                                <p className="text-xl font-bold leading-tight">
+                                  {formatConfidence(imageRow.confidence)}
+                                </p>
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="text-base-content/60 mt-3 text-sm">
+                              No prediction returned for this image yet.
+                            </p>
+                          )}
+
+                          {imageRow.error && (
+                            <p className="text-error mt-2 text-sm">
+                              {imageRow.error}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="alert alert-warning">
+              <span>No image-level result details are available yet.</span>
+            </div>
+          )}
+        </div>
+      </div>
+      <form method="dialog" className="modal-backdrop">
+        <button onClick={onClose}>close</button>
+      </form>
+    </dialog>
+  );
+}
+
+function ScansTable({ scans, loading, error, onRefresh, onOpenResults }) {
   return (
     <div className="card bg-base-100 flex-1 shadow">
       <div className="card-body overflow-auto p-0">
@@ -465,9 +788,19 @@ function ScansTable({ scans, loading, error, onRefresh }) {
                   </td>
                   <td className="max-w-xs">
                     {scan.results ? (
-                      <p className="text-base-content/70 truncate text-sm">
-                        {formatScanResults(scan.results)}
-                      </p>
+                      <div className="flex flex-col items-start gap-2">
+                        <p className="text-base-content/70 w-full truncate text-sm">
+                          {getScanResultsSummary(scan)}
+                        </p>
+                        <button
+                          type="button"
+                          className="btn btn-outline btn-xs"
+                          onClick={() => onOpenResults(scan)}
+                        >
+                          <FaEye />
+                          View result
+                        </button>
+                      </div>
                     ) : (
                       <span className="text-base-content/30 text-sm">—</span>
                     )}
@@ -539,6 +872,7 @@ export default function AiScan() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedOrgan, setSelectedOrgan] = useState("");
+  const [selectedScan, setSelectedScan] = useState(null);
 
   const fetchScans = useCallback(async () => {
     setLoading(true);
@@ -573,6 +907,15 @@ export default function AiScan() {
     document.getElementById("create-scan-modal").showModal();
   }
 
+  function handleOpenResults(scan) {
+    setSelectedScan(scan);
+    document.getElementById("scan-results-modal")?.showModal();
+  }
+
+  function handleCloseResults() {
+    setSelectedScan(null);
+  }
+
   const selectedRegion = ANATOMICAL_REGIONS.find(
     (region) => region.id === selectedOrgan,
   );
@@ -591,9 +934,11 @@ export default function AiScan() {
           loading={loading}
           error={error}
           onRefresh={fetchScans}
+          onOpenResults={handleOpenResults}
         />
         <Sidebar scans={scans} />
       </div>
+      <ScanResultsModal scan={selectedScan} onClose={handleCloseResults} />
       <CreateScan
         onScanCreated={fetchScans}
         initialBodyPart={REGION_BODY_PART_MAP[selectedOrgan] || ""}
