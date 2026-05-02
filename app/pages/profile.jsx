@@ -252,6 +252,7 @@ export default function Profile() {
                   Personal
                 </h2>
                 <InfoRow label="Name" value={fullName} />
+                <InfoRow label="Sex" value={user.sex} />
                 <InfoRow label="Date of Birth" value={user.dateOfBirth} />
                 <InfoRow
                   label="Height"
@@ -270,7 +271,8 @@ export default function Profile() {
                   Notes for doctor
                 </h2>
                 <p className="text-base-content/70 text-sm">
-                  {user.additionalInfo || "No additional information provided."}
+                  {user.additionalMedicalInfo ||
+                    "No additional information provided."}
                 </p>
               </div>
             </div>

@@ -4,14 +4,16 @@ import {
   FaGoogle,
   FaLock,
   FaNotesMedical,
-  FaUser,
   FaUserPlus,
+  FaVenusMars,
 } from "react-icons/fa";
 import { useNavigate } from "react-router";
 import isEmail from "validator/lib/isEmail";
 import isNumeric from "validator/lib/isNumeric";
 import { API_BASE, setAuth } from "../../utils/auth";
 import StepActions from "../common/step-actions";
+
+const SEX_OPTIONS = ["Man", "Woman"];
 
 function isAtLeast18(dateStr) {
   if (!dateStr) return false;
@@ -143,6 +145,29 @@ function Field({ label, type, name, value, onChange }) {
   );
 }
 
+function SelectField({ label, name, value, onChange, options }) {
+  return (
+    <label className="floating-label">
+      <select
+        name={name}
+        className="select w-full"
+        value={value}
+        onChange={onChange}
+      >
+        <option value="" disabled>
+          Select {label.toLowerCase()}
+        </option>
+        {options.map((option) => (
+          <option key={option} value={option}>
+            {option}
+          </option>
+        ))}
+      </select>
+      <span>{label}</span>
+    </label>
+  );
+}
+
 function StepEmail({ onNext, values, onChange }) {
   function handleGoogleLogin() {
     // TODO: implement Google login
@@ -229,6 +254,7 @@ function StepPersonalInfo({ onNext, onBack, values, onChange }) {
     values.firstName.length <= 100 &&
     values.lastName.length >= 1 &&
     values.lastName.length <= 100 &&
+    SEX_OPTIONS.includes(values.sex) &&
     isAtLeast18(values.dateOfBirth) &&
     isNumeric(values.height) &&
     isNumeric(values.weight);
@@ -236,7 +262,7 @@ function StepPersonalInfo({ onNext, onBack, values, onChange }) {
   return (
     <form className="flex h-full flex-col gap-4">
       <h2 className="flex items-center gap-2 text-2xl font-bold">
-        <FaUser /> Personal info
+        <FaVenusMars /> Personal info
       </h2>
       <div className="grid grid-cols-2 gap-4">
         <Field
@@ -254,6 +280,13 @@ function StepPersonalInfo({ onNext, onBack, values, onChange }) {
           onChange={onChange}
         />
       </div>
+      <SelectField
+        label="Sex"
+        name="sex"
+        value={values.sex}
+        onChange={onChange}
+        options={SEX_OPTIONS}
+      />
       <Field
         label="Date of Birth"
         type="date"
@@ -281,7 +314,7 @@ function StepPersonalInfo({ onNext, onBack, values, onChange }) {
         onNext={onNext}
         onBack={onBack}
         disabled={!isValid}
-        tooltipMessage="Please fill in all fields. You must be at least 18 years old."
+        tooltipMessage="Please complete all personal details and confirm you are at least 18 years old."
       />
     </form>
   );
@@ -334,6 +367,7 @@ function RegisterForm() {
     confirmPassword: "",
     firstName: "",
     lastName: "",
+    sex: "",
     dateOfBirth: "",
     height: "",
     weight: "",
@@ -367,6 +401,7 @@ function RegisterForm() {
           password: form.password,
           firstName: form.firstName,
           lastName: form.lastName,
+          sex: form.sex,
           dateOfBirth: form.dateOfBirth,
           height: parseFloat(form.height),
           weight: parseFloat(form.weight),
