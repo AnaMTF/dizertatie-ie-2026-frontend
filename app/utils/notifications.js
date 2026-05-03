@@ -1,5 +1,8 @@
 import { API_BASE, getToken } from "./auth";
 
+export const NOTIFICATIONS_UNREAD_CHANGED_EVENT =
+  "notifications-unread-changed";
+
 function getAuthHeaders() {
   const token = getToken();
 
@@ -9,8 +12,24 @@ function getAuthHeaders() {
   };
 }
 
+function notifyUnreadCountChanged() {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event(NOTIFICATIONS_UNREAD_CHANGED_EVENT));
+  }
+}
+
 async function parseResponse(response) {
-  const json = await response.json();
+  let json = null;
+  const contentType = response.headers.get("content-type") || "";
+
+  if (contentType.includes("application/json")) {
+    json = await response.json();
+  } else {
+    const text = await response.text();
+    if (text) {
+      throw new Error(text);
+    }
+  }
 
   if (!response.ok) {
     const error = json?.error;
@@ -20,6 +39,10 @@ async function parseResponse(response) {
 
     if (Array.isArray(error) && error[0]?.message) {
       throw new Error(error[0].message);
+    }
+
+    if (response.status === 429) {
+      throw new Error("Too many requests. Please wait and try again.");
     }
 
     throw new Error("Request failed");
@@ -65,6 +88,7 @@ export async function markNotificationAsRead(uuid) {
   });
 
   const json = await parseResponse(response);
+  notifyUnreadCountChanged();
   return json.data;
 }
 
@@ -75,6 +99,7 @@ export async function markAllNotificationsAsRead() {
   });
 
   const json = await parseResponse(response);
+  notifyUnreadCountChanged();
   return json.data?.updatedCount || 0;
 }
 
@@ -85,4 +110,5 @@ export async function deleteNotificationByUuid(uuid) {
   });
 
   await parseResponse(response);
+  notifyUnreadCountChanged();
 }

@@ -12,7 +12,10 @@ import {
 } from "react-icons/fa";
 import { Link } from "react-router";
 import { getToken } from "../../utils/auth";
-import { getUnreadNotificationCount } from "../../utils/notifications";
+import {
+  getUnreadNotificationCount,
+  NOTIFICATIONS_UNREAD_CHANGED_EVENT,
+} from "../../utils/notifications";
 import Login from "../authentication/login";
 import Logout from "../authentication/logout";
 import Register from "../authentication/register";
@@ -26,24 +29,40 @@ function LoggedInActions({ user }) {
       return;
     }
 
+    let isMounted = true;
     let intervalId;
 
     async function fetchUnreadCount() {
       try {
         const count = await getUnreadNotificationCount();
-        setUnreadCount(count);
+        if (isMounted) {
+          setUnreadCount(count);
+        }
       } catch {
         // silently fail
       }
     }
 
+    function handleUnreadChanged() {
+      fetchUnreadCount();
+    }
+
     fetchUnreadCount();
     intervalId = window.setInterval(fetchUnreadCount, 30000);
+    window.addEventListener(
+      NOTIFICATIONS_UNREAD_CHANGED_EVENT,
+      handleUnreadChanged,
+    );
 
     return () => {
+      isMounted = false;
       window.clearInterval(intervalId);
+      window.removeEventListener(
+        NOTIFICATIONS_UNREAD_CHANGED_EVENT,
+        handleUnreadChanged,
+      );
     };
-  }, []);
+  }, [user]);
 
   function handleLogOut() {
     document.getElementById("logout-modal").showModal();

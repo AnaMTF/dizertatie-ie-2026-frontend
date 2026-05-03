@@ -62,6 +62,7 @@ export default function NotificationsPage() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [isBulkActionLoading, setIsBulkActionLoading] = useState(false);
   const [isPushEnabled, setIsPushEnabled] = useState(false);
   const [isPushLoading, setIsPushLoading] = useState(false);
   const [isPushAvailable, setIsPushAvailable] = useState(false);
@@ -170,6 +171,11 @@ export default function NotificationsPage() {
   }
 
   async function handleMarkAllAsRead() {
+    if (isBulkActionLoading) {
+      return;
+    }
+
+    setIsBulkActionLoading(true);
     setError("");
 
     try {
@@ -182,6 +188,8 @@ export default function NotificationsPage() {
       );
     } catch (requestError) {
       setError(extractErrorMessage(requestError));
+    } finally {
+      setIsBulkActionLoading(false);
     }
   }
 
@@ -239,7 +247,7 @@ export default function NotificationsPage() {
               type="button"
               className="btn btn-sm btn-ghost"
               onClick={handleMarkAllAsRead}
-              disabled={!items.length}
+              disabled={!items.length || isBulkActionLoading}
             >
               <FaCheckDouble />
               Mark all read
@@ -257,7 +265,8 @@ export default function NotificationsPage() {
           <div className="card-body p-0">
             <div className="border-base-300 border-b p-4">
               <p className="text-sm">
-                Unread in this page: <span className="font-semibold">{unreadCount}</span>
+                Unread in this page:{" "}
+                <span className="font-semibold">{unreadCount}</span>
               </p>
             </div>
 
@@ -280,7 +289,9 @@ export default function NotificationsPage() {
                         <div className="mb-1 flex items-center gap-2">
                           <p className="font-semibold">{notification.title}</p>
                           {!notification.readAt && (
-                            <span className="badge badge-info badge-xs">Unread</span>
+                            <span className="badge badge-info badge-xs">
+                              Unread
+                            </span>
                           )}
                         </div>
                         <p className="text-base-content/70 text-sm">
@@ -303,7 +314,9 @@ export default function NotificationsPage() {
                         <button
                           type="button"
                           className="btn btn-sm btn-ghost"
-                          onClick={() => handleDeleteNotification(notification.uuid)}
+                          onClick={() =>
+                            handleDeleteNotification(notification.uuid)
+                          }
                         >
                           <FaTrash />
                           Delete
