@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { FaEye, FaPlus, FaRobot, FaSyncAlt } from "react-icons/fa";
-import { redirect } from "react-router";
+import { redirect, useSearchParams } from "react-router";
 import CreateScan from "../components/scans/create-scan";
 import { API_BASE, getToken, getUser } from "../utils/auth";
 
@@ -681,7 +681,9 @@ function ScansTable({ scans, loading, error, onRefresh, onOpenResults }) {
                     <StatusBadge status={scan.status} />
                   </td>
                   <td className="max-w-xs">
-                    {scan.results ? (
+                    {scan.results &&
+                    (scan.status === "completed" ||
+                      scan.status === "failed") ? (
                       <div className="flex flex-col items-start gap-2">
                         <p className="text-base-content/70 w-full truncate text-sm">
                           {getScanResultsSummary(scan)}
@@ -695,6 +697,11 @@ function ScansTable({ scans, loading, error, onRefresh, onOpenResults }) {
                           View result
                         </button>
                       </div>
+                    ) : scan.status === "pending" ||
+                      scan.status === "processing" ? (
+                      <span className="text-base-content/60 text-sm">
+                        Still processing...
+                      </span>
                     ) : (
                       <span className="text-base-content/30 text-sm">—</span>
                     )}
@@ -760,6 +767,7 @@ function Sidebar({ scans }) {
 }
 
 export default function AiScan() {
+  const [searchParams] = useSearchParams();
   const [scans, setScans] = useState([]);
   const [scanOptions, setScanOptions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -768,6 +776,7 @@ export default function AiScan() {
   const [optionsError, setOptionsError] = useState(null);
   const [selectedRegionKey, setSelectedRegionKey] = useState("");
   const [selectedScan, setSelectedScan] = useState(null);
+  const [deepLinkOpenedScanUuid, setDeepLinkOpenedScanUuid] = useState(null);
 
   const fetchScans = useCallback(async () => {
     setLoading(true);
@@ -845,6 +854,30 @@ export default function AiScan() {
 
     fetchScanOptions();
   }, []);
+
+  useEffect(() => {
+    const scanUuid = searchParams.get("scan");
+    if (
+      !scanUuid ||
+      scans.length === 0 ||
+      deepLinkOpenedScanUuid === scanUuid
+    ) {
+      return;
+    }
+
+    const scan = scans.find((scanItem) => scanItem.uuid === scanUuid);
+    if (!scan) {
+      return;
+    }
+
+    if (scan.status === "completed" || scan.status === "failed") {
+      setSelectedScan(scan);
+      setDeepLinkOpenedScanUuid(scanUuid);
+      setTimeout(() => {
+        document.getElementById("scan-results-modal")?.showModal();
+      }, 0);
+    }
+  }, [searchParams, scans, deepLinkOpenedScanUuid]);
 
   function handleNewScan() {
     if (optionsLoading || scanOptions.length === 0 || !selectedRegionKey) {
