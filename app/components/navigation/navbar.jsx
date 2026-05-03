@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   FaBell,
   FaCalendarAlt,
@@ -10,16 +11,21 @@ import {
   FaUserPlus,
 } from "react-icons/fa";
 import { Link } from "react-router";
-import { useEffect, useState } from "react";
+import { getToken } from "../../utils/auth";
+import { getUnreadNotificationCount } from "../../utils/notifications";
 import Login from "../authentication/login";
 import Logout from "../authentication/logout";
 import Register from "../authentication/register";
-import { getUnreadNotificationCount } from "../../utils/notifications";
 
-function LoggedInActions() {
+function LoggedInActions({ user }) {
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
+    if (!user || !getToken()) {
+      setUnreadCount(0);
+      return;
+    }
+
     let intervalId;
 
     async function fetchUnreadCount() {
@@ -133,7 +139,7 @@ export function Navbar({ user = null }) {
         </button>
       </div>
       <div className="navbar-end gap-4">
-        {isLoggedIn ? <LoggedInActions /> : <LoggedOutActions />}
+        {isLoggedIn ? <LoggedInActions user={user} /> : <LoggedOutActions />}
       </div>
     </div>
   );
