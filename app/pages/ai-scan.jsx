@@ -407,7 +407,7 @@ function ScanResultsModal({ scan, onClose }) {
 
   return (
     <dialog id="scan-results-modal" className="modal" onClose={onClose}>
-      <div className="modal-box max-w-4xl">
+      <div className="modal-box h-[90vh] max-h-[90vh] w-11/12 max-w-6xl overflow-y-auto">
         <form method="dialog">
           <button className="btn btn-sm btn-circle btn-ghost absolute top-2 right-2">
             ✕
@@ -550,20 +550,20 @@ function ScanResultsModal({ scan, onClose }) {
                           </div>
 
                           {imageRow.label ? (
-                            <div className="mt-3 grid grid-cols-2 gap-3">
-                              <div>
+                            <div className="mt-3 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+                              <div className="min-w-0">
                                 <p className="text-base-content/50 text-xs uppercase">
                                   Label
                                 </p>
-                                <p className="text-xl leading-tight font-bold">
+                                <p className="text-xl leading-tight font-bold wrap-break-word">
                                   {imageRow.label}
                                 </p>
                               </div>
-                              <div>
+                              <div className="text-right">
                                 <p className="text-base-content/50 text-xs uppercase">
                                   Confidence
                                 </p>
-                                <p className="text-xl leading-tight font-bold">
+                                <p className="text-xl leading-tight font-bold whitespace-nowrap">
                                   {formatConfidence(imageRow.confidence)}
                                 </p>
                               </div>
