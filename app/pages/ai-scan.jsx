@@ -228,6 +228,17 @@ function getAuthToken() {
   return getToken();
 }
 
+function buildOptimizedScanImageUrl(scanUuid, imageUuid) {
+  const query = new URLSearchParams({
+    w: "960",
+    h: "960",
+    q: "78",
+    format: "webp",
+  });
+
+  return `${API_BASE}/scan/${encodeURIComponent(scanUuid)}/images/${encodeURIComponent(imageUuid)}?${query.toString()}`;
+}
+
 function RegionSelector({ regions, selectedRegionKey, onSelectRegion }) {
   return (
     <div className="card bg-base-100 border-base-200 border shadow-sm">
@@ -404,6 +415,91 @@ function ScanResultsModal({ scan, onClose }) {
   const hasStructuredResults = results && typeof results === "object";
   const imageRows = getScanImageRows(scan);
   const groupedImageRows = groupScanImageRowsByModel(imageRows);
+  const [submittedImageSources, setSubmittedImageSources] = useState({});
+
+  useEffect(() => {
+    const submittedImages = Array.isArray(scan?.images) ? scan.images : [];
+    const scanUuid = scan?.uuid;
+    const token = getAuthToken();
+
+    if (!scanUuid || submittedImages.length === 0 || !token) {
+      setSubmittedImageSources({});
+      return;
+    }
+
+    const abortControllers = [];
+    const objectUrls = [];
+
+    setSubmittedImageSources(
+      Object.fromEntries(
+        submittedImages.map((image, index) => {
+          const imageUuid =
+            image?.uuid ||
+            image?.imageUuid ||
+            image?.id ||
+            `image-${index + 1}`;
+
+          return [
+            imageUuid,
+            {
+              loading: true,
+              url: null,
+              error: null,
+            },
+          ];
+        }),
+      ),
+    );
+
+    submittedImages.forEach((image, index) => {
+      const imageUuid =
+        image?.uuid || image?.imageUuid || image?.id || `image-${index + 1}`;
+      const abortController = new AbortController();
+      abortControllers.push(abortController);
+
+      fetch(buildOptimizedScanImageUrl(scanUuid, imageUuid), {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: abortController.signal,
+      })
+        .then(async (response) => {
+          if (!response.ok) {
+            throw new Error("Unable to load image");
+          }
+
+          const imageBlob = await response.blob();
+          const objectUrl = URL.createObjectURL(imageBlob);
+          objectUrls.push(objectUrl);
+
+          setSubmittedImageSources((currentSources) => ({
+            ...currentSources,
+            [imageUuid]: {
+              loading: false,
+              url: objectUrl,
+              error: null,
+            },
+          }));
+        })
+        .catch((loadError) => {
+          if (loadError?.name === "AbortError") {
+            return;
+          }
+
+          setSubmittedImageSources((currentSources) => ({
+            ...currentSources,
+            [imageUuid]: {
+              loading: false,
+              url: null,
+              error: loadError.message || "Unable to load image",
+            },
+          }));
+        });
+    });
+
+    return () => {
+      abortControllers.forEach((abortController) => abortController.abort());
+      objectUrls.forEach((objectUrl) => URL.revokeObjectURL(objectUrl));
+    };
+  }, [scan?.images, scan?.uuid]);
 
   return (
     <dialog id="scan-results-modal" className="modal" onClose={onClose}>
@@ -460,6 +556,56 @@ function ScanResultsModal({ scan, onClose }) {
                 <p className="mt-1 font-semibold">
                   {results.failedCount ?? "—"}
                 </p>
+              </div>
+            </div>
+          )}
+
+          {Array.isArray(scan?.images) && scan.images.length > 0 && (
+            <div className="bg-base-200 rounded-box p-4">
+              <div className="mb-3">
+                <p className="text-base-content/50 text-xs uppercase">
+                  Submitted images
+                </p>
+                <p className="text-base-content/70 text-sm">
+                  Optimized previews of the original files used for this scan.
+                </p>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {scan.images.map((image, index) => {
+                  const imageUuid =
+                    image?.uuid ||
+                    image?.imageUuid ||
+                    image?.id ||
+                    `image-${index + 1}`;
+                  const source = submittedImageSources[imageUuid];
+
+                  return (
+                    <div
+                      key={imageUuid}
+                      className="bg-base-100 rounded-box p-3"
+                    >
+                      <p className="text-base-content/50 mb-2 text-xs uppercase">
+                        Image {index + 1}
+                      </p>
+
+                      {source?.url ? (
+                        <img
+                          src={source.url}
+                          alt={`Scan image ${index + 1}`}
+                          className="bg-base-200 h-44 w-full rounded-lg object-cover"
+                          loading="lazy"
+                        />
+                      ) : source?.error ? (
+                        <div className="bg-base-200 text-error flex h-44 items-center justify-center rounded-lg px-3 text-center text-sm">
+                          {source.error}
+                        </div>
+                      ) : (
+                        <div className="bg-base-200 h-44 w-full animate-pulse rounded-lg" />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
