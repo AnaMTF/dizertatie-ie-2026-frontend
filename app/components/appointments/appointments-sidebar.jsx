@@ -31,11 +31,14 @@ export default function AppointmentsSidebar({
     .slice()
     .sort((a, b) => toDateTime(a).getTime() - toDateTime(b).getTime())[0];
 
-  const statusCounts = appointments.reduce((acc, item) => {
-    const key = item.status || "scheduled";
-    acc[key] = (acc[key] || 0) + 1;
-    return acc;
-  }, { ...STATUS_COUNT_TEMPLATE });
+  const statusCounts = appointments.reduce(
+    (acc, item) => {
+      const key = item.status || "scheduled";
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    },
+    { ...STATUS_COUNT_TEMPLATE },
+  );
 
   return (
     <div className="flex w-full shrink-0 flex-col gap-4 lg:w-88">

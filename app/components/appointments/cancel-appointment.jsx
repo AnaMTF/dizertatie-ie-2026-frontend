@@ -32,17 +32,20 @@ export default function CancelAppointmentModal({ appointment, onCancelled }) {
       setSubmitting(true);
       setError("");
 
-      const response = await fetch(`${API_BASE}/appointment/${appointment.uuid}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${getToken()}`,
+      const response = await fetch(
+        `${API_BASE}/appointment/${appointment.uuid}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${getToken()}`,
+          },
+          body: JSON.stringify({
+            status: "cancelled",
+            cancellationReason: reason || undefined,
+          }),
         },
-        body: JSON.stringify({
-          status: "cancelled",
-          cancellationReason: reason || undefined,
-        }),
-      });
+      );
 
       const json = await response.json().catch(() => null);
 
@@ -68,7 +71,9 @@ export default function CancelAppointmentModal({ appointment, onCancelled }) {
         </p>
 
         <label className="mt-4 flex flex-col gap-1">
-          <span className="text-sm font-medium">Cancellation reason (optional)</span>
+          <span className="text-sm font-medium">
+            Cancellation reason (optional)
+          </span>
           <textarea
             className="textarea textarea-bordered w-full"
             value={reason}

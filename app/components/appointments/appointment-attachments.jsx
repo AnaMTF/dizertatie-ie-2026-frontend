@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { FaFile, FaFileImage, FaFilePdf, FaFileWord, FaPaperclip } from "react-icons/fa";
+import {
+  FaFile,
+  FaFileImage,
+  FaFilePdf,
+  FaFileWord,
+  FaPaperclip,
+} from "react-icons/fa";
 import { API_BASE, getToken } from "../../utils/auth";
 
 function extractErrorMessage(error) {
@@ -16,9 +22,11 @@ function extractErrorMessage(error) {
 
 function getFileIcon(mimeType) {
   if (!mimeType) return <FaFile className="text-base-content/60" />;
-  if (mimeType.startsWith("image/")) return <FaFileImage className="text-blue-500" />;
+  if (mimeType.startsWith("image/"))
+    return <FaFileImage className="text-blue-500" />;
   if (mimeType.includes("pdf")) return <FaFilePdf className="text-red-500" />;
-  if (mimeType.includes("word")) return <FaFileWord className="text-blue-600" />;
+  if (mimeType.includes("word"))
+    return <FaFileWord className="text-blue-600" />;
   return <FaPaperclip className="text-base-content/60" />;
 }
 
@@ -79,7 +87,7 @@ export default function AppointmentAttachments({
           {attachments.map((attachment) => (
             <div
               key={attachment.uuid}
-              className="flex items-center justify-between gap-2 rounded bg-base-100 p-2"
+              className="bg-base-100 flex items-center justify-between gap-2 rounded p-2"
             >
               <div className="flex min-w-0 flex-1 items-center gap-2">
                 <div className="flex items-center text-lg">

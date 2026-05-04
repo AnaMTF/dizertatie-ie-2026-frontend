@@ -336,7 +336,9 @@ function StepDateTime({
                   key={slot}
                   type="button"
                   className={`btn btn-sm ${values.time === slot ? "btn-primary" : "btn-outline"}`}
-                  onClick={() => onChange({ target: { name: "time", value: slot } })}
+                  onClick={() =>
+                    onChange({ target: { name: "time", value: slot } })
+                  }
                 >
                   {slot}
                 </button>
@@ -557,11 +559,14 @@ function CreateAppointmentForm({ onCreated }) {
       params.set("clinicUuid", form.clinicUuid);
     }
 
-    const response = await fetch(`${API_BASE}/appointment/availability?${params}`, {
-      headers: {
-        Authorization: `Bearer ${getToken()}`,
+    const response = await fetch(
+      `${API_BASE}/appointment/availability?${params}`,
+      {
+        headers: {
+          Authorization: `Bearer ${getToken()}`,
+        },
       },
-    });
+    );
 
     const json = await response.json().catch(() => null);
 
@@ -622,7 +627,9 @@ function CreateAppointmentForm({ onCreated }) {
         }),
       });
 
-      const appointmentJson = await appointmentResponse.json().catch(() => null);
+      const appointmentJson = await appointmentResponse
+        .json()
+        .catch(() => null);
 
       if (!appointmentResponse.ok) {
         throw new Error(extractErrorMessage(appointmentJson?.error));
@@ -631,7 +638,9 @@ function CreateAppointmentForm({ onCreated }) {
       const appointmentUuid = appointmentJson?.data?.uuid;
 
       if (appointmentUuid && form.documents.length > 0) {
-        const metadata = form.documents.map((file) => ({ fileName: file.name }));
+        const metadata = form.documents.map((file) => ({
+          fileName: file.name,
+        }));
         const documentsForm = new FormData();
 
         form.documents.forEach((file) => {
@@ -702,7 +711,11 @@ function CreateAppointmentForm({ onCreated }) {
     <div className="bg-base-100 text-base-content flex h-full flex-col gap-4 p-10">
       <div className="flex flex-1 flex-col">
         {step === 0 && (
-          <StepSpecialty onNext={nextStep} values={form} onChange={handleChange} />
+          <StepSpecialty
+            onNext={nextStep}
+            values={form}
+            onChange={handleChange}
+          />
         )}
         {step === 1 && (
           <StepDateTime
