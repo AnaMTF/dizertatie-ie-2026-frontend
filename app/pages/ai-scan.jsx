@@ -878,7 +878,7 @@ function Sidebar({ scans }) {
           <div className="flex flex-col gap-2">
             <div className="flex justify-between text-sm">
               <span className="text-base-content/60">Total</span>
-              <span className="font-semibold">{total}</span>
+              <span className="badge badge-neutral badge-sm">{total}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-base-content/60">Pending</span>
