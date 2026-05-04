@@ -5,7 +5,9 @@ import { API_BASE, getToken, getUser, setAuth } from "../utils/auth";
 
 export function clientLoader() {
   if (!getToken()) return redirect("/?login=true");
-  return { user: getUser() };
+  const user = getUser();
+  if (user?.role !== "patient") return redirect("/");
+  return { user };
 }
 
 function getAuthToken() {
@@ -87,6 +89,7 @@ function StatusBadge({ status }) {
     completed: { cls: "badge-success", label: "Completed" },
     failed: { cls: "badge-error", label: "Failed" },
     scheduled: { cls: "badge-info", label: "Scheduled" },
+    confirmed: { cls: "badge-primary", label: "Confirmed" },
     rescheduled: { cls: "badge-warning", label: "Rescheduled" },
     cancelled: { cls: "badge-neutral", label: "Cancelled" },
   };

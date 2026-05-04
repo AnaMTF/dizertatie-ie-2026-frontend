@@ -1,86 +1,28 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   FaBell,
   FaCalendarAlt,
   FaMedkit,
-  FaRobot,
   FaSearch,
   FaSignInAlt,
   FaSignOutAlt,
+  FaStethoscope,
   FaUserCircle,
   FaUserPlus,
 } from "react-icons/fa";
 import { Link } from "react-router";
-import { getToken } from "../../utils/auth";
-import {
-  getUnreadNotificationCount,
-  NOTIFICATIONS_UNREAD_CHANGED_EVENT,
-} from "../../utils/notifications";
 import Login from "../authentication/login";
 import Logout from "../authentication/logout";
 import Register from "../authentication/register";
 
-function LoggedInActions({ user }) {
-  const [unreadCount, setUnreadCount] = useState(0);
-
-  useEffect(() => {
-    if (!user || !getToken()) {
-      setUnreadCount(0);
-      return;
-    }
-
-    let isMounted = true;
-    let intervalId;
-
-    async function fetchUnreadCount() {
-      try {
-        const count = await getUnreadNotificationCount();
-        if (isMounted) {
-          setUnreadCount(count);
-        }
-      } catch {
-        // silently fail
-      }
-    }
-
-    function handleUnreadChanged() {
-      fetchUnreadCount();
-    }
-
-    fetchUnreadCount();
-    intervalId = window.setInterval(fetchUnreadCount, 30000);
-    window.addEventListener(
-      NOTIFICATIONS_UNREAD_CHANGED_EVENT,
-      handleUnreadChanged,
-    );
-
-    return () => {
-      isMounted = false;
-      window.clearInterval(intervalId);
-      window.removeEventListener(
-        NOTIFICATIONS_UNREAD_CHANGED_EVENT,
-        handleUnreadChanged,
-      );
-    };
-  }, [user]);
-
-  function handleLogOut() {
-    document.getElementById("logout-modal").showModal();
-  }
-
+function PatientActions() {
   return (
     <>
       <Link to="/ai-scan" className="btn btn-sm btn-primary">
-        <FaRobot />
         AI Scan
       </Link>
 
-      <Link to="/notifications" className="btn btn-sm btn-ghost indicator">
-        {unreadCount > 0 && (
-          <span className="badge badge-error badge-xs indicator-item">
-            {unreadCount}
-          </span>
-        )}
+      <Link to="/notifications" className="btn btn-sm btn-ghost">
         <FaBell />
         Notifications
       </Link>
@@ -94,6 +36,29 @@ function LoggedInActions({ user }) {
         <FaUserCircle />
         Profile
       </Link>
+    </>
+  );
+}
+
+function DoctorActions() {
+  return (
+    <>
+      <Link to="/doctor/appointments" className="btn btn-sm btn-primary">
+        <FaStethoscope />
+        My Appointments
+      </Link>
+    </>
+  );
+}
+
+function LoggedInActions({ user }) {
+  function handleLogOut() {
+    document.getElementById("logout-modal").showModal();
+  }
+
+  return (
+    <>
+      {user?.role === "doctor" ? <DoctorActions /> : <PatientActions />}
 
       <div className="bg-neutral-content/30 h-6 w-px" />
 
@@ -133,7 +98,9 @@ function LoggedOutActions() {
 }
 
 export function Navbar({ user = null }) {
+  const [searchValue, setSearchValue] = useState("");
   const isLoggedIn = Boolean(user);
+
   function handleSearch() {
     // TODO: implement search logic
   }
@@ -151,6 +118,8 @@ export function Navbar({ user = null }) {
           type="text"
           placeholder="Search..."
           className="input input-accent input-sm bg-base-200 text-base-content placeholder-base-content/50 w-xl"
+          value={searchValue}
+          onChange={(event) => setSearchValue(event.target.value)}
         />
         <button onClick={handleSearch} className="btn btn-sm btn-accent">
           <FaSearch />

@@ -8,4 +8,7 @@ export default [
   route("/appointments", "pages/appointments.jsx"),
   route("/ai-scan", "pages/ai-scan.jsx"),
   route("/notifications", "pages/notifications.jsx"),
+
+  /* Doctor-specific routes */
+  route("/doctor/appointments", "pages/doctor-appointments.jsx"),
 ];
