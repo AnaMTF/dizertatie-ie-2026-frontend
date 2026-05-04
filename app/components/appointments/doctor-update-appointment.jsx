@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { API_BASE, getToken } from "../../utils/auth";
-import AppointmentAttachments from "./appointment-attachments";
 
 const TIME_SLOTS = ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"];
 
@@ -16,13 +15,15 @@ function extractErrorMessage(error) {
   return "Something went wrong";
 }
 
-export default function UpdateAppointmentModal({ appointment, onUpdated }) {
+export default function DoctorUpdateAppointmentModal({
+  appointment,
+  onUpdated,
+}) {
   const [date, setDate] = useState("");
   const [timeSlot, setTimeSlot] = useState("");
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [currentAppointment, setCurrentAppointment] = useState(appointment);
 
   useEffect(() => {
     if (!appointment) {
@@ -30,7 +31,6 @@ export default function UpdateAppointmentModal({ appointment, onUpdated }) {
       setTimeSlot("");
       setNotes("");
       setError("");
-      setCurrentAppointment(null);
       return;
     }
 
@@ -38,7 +38,6 @@ export default function UpdateAppointmentModal({ appointment, onUpdated }) {
     setTimeSlot(appointment.timeSlot || "");
     setNotes(appointment.notes || "");
     setError("");
-    setCurrentAppointment(appointment);
   }, [appointment]);
 
   async function handleUpdate() {
@@ -66,8 +65,7 @@ export default function UpdateAppointmentModal({ appointment, onUpdated }) {
           body: JSON.stringify({
             date,
             timeSlot,
-            status: "rescheduled",
-            notes: notes || undefined,
+            notes: notes || null,
           }),
         },
       );
@@ -78,7 +76,7 @@ export default function UpdateAppointmentModal({ appointment, onUpdated }) {
         throw new Error(extractErrorMessage(json?.error));
       }
 
-      document.getElementById("update-appointment-modal")?.close();
+      document.getElementById("doctor-update-appointment-modal")?.close();
       onUpdated?.();
     } catch (requestError) {
       setError(requestError.message || "Failed to update appointment");
@@ -87,24 +85,12 @@ export default function UpdateAppointmentModal({ appointment, onUpdated }) {
     }
   }
 
-  function handleAttachmentRemoved(documentUuid) {
-    setCurrentAppointment((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        documents: (prev.documents || []).filter(
-          (doc) => doc.uuid !== documentUuid,
-        ),
-      };
-    });
-  }
-
   return (
-    <dialog id="update-appointment-modal" className="modal">
+    <dialog id="doctor-update-appointment-modal" className="modal">
       <div className="modal-box max-w-lg">
         <h3 className="text-lg font-bold">Update appointment</h3>
         <p className="text-base-content/60 mt-1 text-sm">
-          Choose a new date and slot for this appointment.
+          Reschedule this appointment or update consultation notes.
         </p>
 
         <div className="mt-4 flex flex-col gap-3">
@@ -135,26 +121,16 @@ export default function UpdateAppointmentModal({ appointment, onUpdated }) {
           </label>
 
           <label className="flex flex-col gap-1">
-            <span className="text-sm font-medium">Notes</span>
+            <span className="text-sm font-medium">Consultation notes</span>
             <textarea
               className="textarea textarea-bordered w-full"
+              rows={5}
               value={notes}
               onChange={(event) => setNotes(event.target.value)}
+              placeholder="Add or update notes for this appointment"
             />
           </label>
         </div>
-
-        {currentAppointment?.documents?.length > 0 && (
-          <div className="mt-4">
-            <AppointmentAttachments
-              appointmentUuid={currentAppointment.uuid}
-              attachments={currentAppointment.documents}
-              isPatient={true}
-              appointmentStatus={currentAppointment.status}
-              onRemove={handleAttachmentRemoved}
-            />
-          </div>
-        )}
 
         {error && (
           <div className="alert alert-error mt-4">
@@ -172,7 +148,7 @@ export default function UpdateAppointmentModal({ appointment, onUpdated }) {
             onClick={handleUpdate}
             disabled={submitting}
           >
-            {submitting ? "Updating..." : "Update"}
+            {submitting ? "Updating..." : "Save changes"}
           </button>
         </div>
       </div>
