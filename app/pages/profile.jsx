@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { FaCalendarPlus, FaRobot, FaUserEdit } from "react-icons/fa";
 import { Link, redirect, useLoaderData } from "react-router";
-import { API_BASE, getToken, getUser } from "../utils/auth";
+import { API_BASE, getToken, getUser, setAuth } from "../utils/auth";
 
 export function clientLoader() {
   if (!getToken()) return redirect("/?login=true");
@@ -30,6 +30,53 @@ function InfoRow({ label, value }) {
       <span className="text-base-content/60 text-sm">{label}</span>
       <span className="text-sm font-medium">{value || "—"}</span>
     </div>
+  );
+}
+
+function buildProfileForm(user) {
+  return {
+    email: user.email || "",
+    firstName: user.firstName || "",
+    lastName: user.lastName || "",
+    sex: user.sex || "",
+    dateOfBirth: user.dateOfBirth || "",
+    height: user.height != null ? String(user.height) : "",
+    weight: user.weight != null ? String(user.weight) : "",
+  };
+}
+
+function buildUpdatePayload(form, user) {
+  const nextData = {
+    email: form.email.trim(),
+    firstName: form.firstName.trim(),
+    lastName: form.lastName.trim(),
+    sex: form.sex,
+    dateOfBirth: form.dateOfBirth,
+  };
+
+  if (form.height !== "") {
+    const height = Number(form.height);
+    if (Number.isFinite(height) && height >= 0) {
+      nextData.height = height;
+    }
+  }
+
+  if (form.weight !== "") {
+    const weight = Number(form.weight);
+    if (Number.isFinite(weight) && weight >= 0) {
+      nextData.weight = weight;
+    }
+  }
+
+  return Object.fromEntries(
+    Object.entries(nextData).filter(([key, value]) => {
+      if (value === "") {
+        return false;
+      }
+
+      const currentValue = user[key];
+      return String(currentValue ?? "") !== String(value);
+    }),
   );
 }
 
@@ -230,7 +277,156 @@ function UpcomingAppointments() {
 
 export default function Profile() {
   const { user } = useLoaderData();
-  const fullName = `${user.firstName} ${user.lastName}`;
+  const [profileUser, setProfileUser] = useState(user);
+  const [isEditingPersonal, setIsEditingPersonal] = useState(false);
+  const [personalForm, setPersonalForm] = useState(() =>
+    buildProfileForm(user),
+  );
+  const [personalSaveError, setPersonalSaveError] = useState(null);
+  const [personalSaveSuccess, setPersonalSaveSuccess] = useState(null);
+  const [isSavingPersonal, setIsSavingPersonal] = useState(false);
+
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [notesForm, setNotesForm] = useState(user.additionalMedicalInfo || "");
+  const [notesSaveError, setNotesSaveError] = useState(null);
+  const [notesSaveSuccess, setNotesSaveSuccess] = useState(null);
+  const [isSavingNotes, setIsSavingNotes] = useState(false);
+
+  useEffect(() => {
+    setProfileUser(user);
+    setPersonalForm(buildProfileForm(user));
+    setNotesForm(user.additionalMedicalInfo || "");
+  }, [user]);
+
+  const fullName = `${profileUser.firstName} ${profileUser.lastName}`;
+
+  function handleFormChange(event) {
+    const { name, value } = event.target;
+    setPersonalForm((previous) => ({ ...previous, [name]: value }));
+  }
+
+  function handleStartEditing() {
+    setPersonalSaveError(null);
+    setPersonalSaveSuccess(null);
+    setPersonalForm(buildProfileForm(profileUser));
+    setIsEditingPersonal(true);
+  }
+
+  function handleCancelEditing() {
+    setPersonalForm(buildProfileForm(profileUser));
+    setPersonalSaveError(null);
+    setPersonalSaveSuccess(null);
+    setIsEditingPersonal(false);
+  }
+
+  function handleStartEditingNotes() {
+    setNotesSaveError(null);
+    setNotesSaveSuccess(null);
+    setNotesForm(profileUser.additionalMedicalInfo || "");
+    setIsEditingNotes(true);
+  }
+
+  function handleCancelEditingNotes() {
+    setNotesForm(profileUser.additionalMedicalInfo || "");
+    setNotesSaveError(null);
+    setNotesSaveSuccess(null);
+    setIsEditingNotes(false);
+  }
+
+  async function patchProfile(payload) {
+    const token = getAuthToken();
+    if (!token) {
+      return { error: "You are no longer logged in. Please sign in again." };
+    }
+
+    try {
+      const response = await fetch(`${API_BASE}/patient/${profileUser.uuid}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const json = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        return {
+          error:
+            json?.error ||
+            `Failed to update profile (HTTP ${response.status}).`,
+        };
+      }
+
+      if (!json?.data) {
+        return { error: "Failed to update profile: invalid server response." };
+      }
+
+      setProfileUser(json.data);
+      setPersonalForm(buildProfileForm(json.data));
+      setNotesForm(json.data.additionalMedicalInfo || "");
+      setAuth({ user: json.data, token });
+
+      return { error: null };
+    } catch {
+      return { error: "Network error. Please try again." };
+    }
+  }
+
+  async function handleSaveProfile() {
+    const payload = buildUpdatePayload(personalForm, profileUser);
+    if (Object.keys(payload).length === 0) {
+      setPersonalSaveError(null);
+      setPersonalSaveSuccess("No changes to save.");
+      return;
+    }
+
+    setIsSavingPersonal(true);
+    setPersonalSaveError(null);
+    setPersonalSaveSuccess(null);
+
+    const { error } = await patchProfile(payload);
+
+    if (error) {
+      setPersonalSaveError(error);
+    } else {
+      setPersonalSaveSuccess("Personal information updated successfully.");
+      setIsEditingPersonal(false);
+    }
+
+    setIsSavingPersonal(false);
+  }
+
+  async function handleSaveNotes() {
+    const payload = {
+      additionalMedicalInfo: notesForm.trim(),
+    };
+
+    if (
+      String(profileUser.additionalMedicalInfo ?? "") ===
+      String(payload.additionalMedicalInfo)
+    ) {
+      setNotesSaveError(null);
+      setNotesSaveSuccess("No changes to save.");
+      return;
+    }
+
+    setIsSavingNotes(true);
+    setNotesSaveError(null);
+    setNotesSaveSuccess(null);
+
+    const { error } = await patchProfile(payload);
+
+    if (error) {
+      setNotesSaveError(error);
+    } else {
+      setNotesSaveSuccess("Notes updated successfully.");
+      setIsEditingNotes(false);
+    }
+
+    setIsSavingNotes(false);
+  }
 
   return (
     <div className="px-9 pt-6">
@@ -248,32 +444,251 @@ export default function Profile() {
           <div className="flex flex-col gap-6 lg:col-span-2">
             <div className="card bg-base-200 shadow">
               <div className="card-body gap-0 p-4">
-                <h2 className="text-base-content/40 mb-2 text-xs font-semibold tracking-widest uppercase">
-                  Personal
-                </h2>
-                <InfoRow label="Name" value={fullName} />
-                <InfoRow label="Sex" value={user.sex} />
-                <InfoRow label="Date of Birth" value={user.dateOfBirth} />
-                <InfoRow
-                  label="Height"
-                  value={user.height ? `${user.height} cm` : null}
-                />
-                <InfoRow
-                  label="Weight"
-                  value={user.weight ? `${user.weight} kg` : null}
-                />
+                <div className="mb-2 flex items-center justify-between">
+                  <h2 className="text-base-content/40 text-xs font-semibold tracking-widest uppercase">
+                    Personal
+                  </h2>
+                  {!isEditingPersonal && (
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-sm"
+                      onClick={handleStartEditing}
+                    >
+                      <FaUserEdit />
+                      Edit
+                    </button>
+                  )}
+                </div>
+
+                {personalSaveError && (
+                  <div className="alert alert-error mb-3">
+                    <span>{personalSaveError}</span>
+                  </div>
+                )}
+
+                {personalSaveSuccess && (
+                  <div className="alert alert-success mb-3">
+                    <span>{personalSaveSuccess}</span>
+                  </div>
+                )}
+
+                {isEditingPersonal ? (
+                  <div className="flex flex-col gap-3">
+                    <label className="floating-label">
+                      <input
+                        type="email"
+                        name="email"
+                        className="input w-full"
+                        placeholder="Email"
+                        value={personalForm.email}
+                        onChange={handleFormChange}
+                      />
+                      <span>Email</span>
+                    </label>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label className="floating-label">
+                        <input
+                          type="text"
+                          name="firstName"
+                          className="input w-full"
+                          placeholder="First name"
+                          value={personalForm.firstName}
+                          onChange={handleFormChange}
+                        />
+                        <span>First name</span>
+                      </label>
+
+                      <label className="floating-label">
+                        <input
+                          type="text"
+                          name="lastName"
+                          className="input w-full"
+                          placeholder="Last name"
+                          value={personalForm.lastName}
+                          onChange={handleFormChange}
+                        />
+                        <span>Last name</span>
+                      </label>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label className="floating-label">
+                        <select
+                          name="sex"
+                          className="select w-full"
+                          value={personalForm.sex}
+                          onChange={handleFormChange}
+                        >
+                          <option value="">Select sex</option>
+                          <option value="Man">Man</option>
+                          <option value="Woman">Woman</option>
+                        </select>
+                        <span>Sex</span>
+                      </label>
+
+                      <label className="floating-label">
+                        <input
+                          type="date"
+                          name="dateOfBirth"
+                          className="input w-full"
+                          placeholder="Date of birth"
+                          value={personalForm.dateOfBirth}
+                          onChange={handleFormChange}
+                        />
+                        <span>Date of birth</span>
+                      </label>
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label className="floating-label">
+                        <input
+                          type="number"
+                          min="0"
+                          name="height"
+                          className="input w-full"
+                          placeholder="Height (cm)"
+                          value={personalForm.height}
+                          onChange={handleFormChange}
+                        />
+                        <span>Height (cm)</span>
+                      </label>
+
+                      <label className="floating-label">
+                        <input
+                          type="number"
+                          min="0"
+                          name="weight"
+                          className="input w-full"
+                          placeholder="Weight (kg)"
+                          value={personalForm.weight}
+                          onChange={handleFormChange}
+                        />
+                        <span>Weight (kg)</span>
+                      </label>
+                    </div>
+
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        onClick={handleSaveProfile}
+                        disabled={isSavingPersonal}
+                      >
+                        {isSavingPersonal ? (
+                          <span className="loading loading-spinner loading-sm" />
+                        ) : (
+                          "Save changes"
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-ghost"
+                        onClick={handleCancelEditing}
+                        disabled={isSavingPersonal}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <InfoRow label="Name" value={fullName} />
+                    <InfoRow label="Email" value={profileUser.email} />
+                    <InfoRow label="Sex" value={profileUser.sex} />
+                    <InfoRow
+                      label="Date of Birth"
+                      value={profileUser.dateOfBirth}
+                    />
+                    <InfoRow
+                      label="Height"
+                      value={
+                        profileUser.height ? `${profileUser.height} cm` : null
+                      }
+                    />
+                    <InfoRow
+                      label="Weight"
+                      value={
+                        profileUser.weight ? `${profileUser.weight} kg` : null
+                      }
+                    />
+                  </>
+                )}
               </div>
             </div>
 
             <div className="card bg-base-200 shadow">
               <div className="card-body p-4">
-                <h2 className="text-base-content/40 mb-2 text-xs font-semibold tracking-widest uppercase">
-                  Notes for doctor
-                </h2>
-                <p className="text-base-content/70 text-sm">
-                  {user.additionalMedicalInfo ||
-                    "No additional information provided."}
-                </p>
+                <div className="mb-2 flex items-center justify-between">
+                  <h2 className="text-base-content/40 text-xs font-semibold tracking-widest uppercase">
+                    Notes for doctor
+                  </h2>
+                  {!isEditingNotes && (
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-sm"
+                      onClick={handleStartEditingNotes}
+                    >
+                      <FaUserEdit />
+                      Edit notes
+                    </button>
+                  )}
+                </div>
+
+                {notesSaveError && (
+                  <div className="alert alert-error mb-3">
+                    <span>{notesSaveError}</span>
+                  </div>
+                )}
+
+                {notesSaveSuccess && (
+                  <div className="alert alert-success mb-3">
+                    <span>{notesSaveSuccess}</span>
+                  </div>
+                )}
+
+                {isEditingNotes ? (
+                  <div className="flex flex-col gap-3">
+                    <label className="floating-label">
+                      <textarea
+                        name="additionalMedicalInfo"
+                        className="textarea min-h-28 w-full"
+                        placeholder="Notes for doctor"
+                        value={notesForm}
+                        onChange={(event) => setNotesForm(event.target.value)}
+                      />
+                      <span>Notes for doctor</span>
+                    </label>
+
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        onClick={handleSaveNotes}
+                        disabled={isSavingNotes}
+                      >
+                        {isSavingNotes ? (
+                          <span className="loading loading-spinner loading-sm" />
+                        ) : (
+                          "Save notes"
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-ghost"
+                        onClick={handleCancelEditingNotes}
+                        disabled={isSavingNotes}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-base-content/70 text-sm">
+                    {profileUser.additionalMedicalInfo ||
+                      "No additional information provided."}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -295,9 +710,14 @@ export default function Profile() {
                     <FaRobot />
                     AI Scan
                   </Link>
-                  <button className="btn btn-outline w-full">
+                  <button
+                    type="button"
+                    className="btn btn-outline w-full"
+                    onClick={handleStartEditing}
+                    disabled={isEditingPersonal}
+                  >
                     <FaUserEdit />
-                    Edit Profile
+                    {isEditingPersonal ? "Editing profile" : "Edit Profile"}
                   </button>
                 </div>
               </div>
