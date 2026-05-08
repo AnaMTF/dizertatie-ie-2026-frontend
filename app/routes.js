@@ -10,5 +10,6 @@ export default [
   route("/notifications", "pages/notifications.jsx"),
 
   /* Doctor-specific routes */
+  route("/doctor/profile", "pages/doctor-profile.jsx"),
   route("/doctor/appointments", "pages/doctor-appointments.jsx"),
 ];
