@@ -38,6 +38,7 @@ export default function AppointmentAttachments({
   onRemove,
 }) {
   const [removingUuid, setRemovingUuid] = useState(null);
+  const [downloadingUuid, setDownloadingUuid] = useState(null);
   const [error, setError] = useState("");
   const [confirmDeleteUuid, setConfirmDeleteUuid] = useState(null);
 
@@ -45,6 +46,40 @@ export default function AppointmentAttachments({
     isPatient &&
     appointmentStatus !== "confirmed" &&
     appointmentStatus !== "completed";
+
+  async function handleDownload(attachment) {
+    try {
+      setDownloadingUuid(attachment.uuid);
+
+      const response = await fetch(
+        `${API_BASE}/appointment/${appointmentUuid}/documents/${attachment.uuid}`,
+        {
+          headers: {
+            Authorization: `Bearer ${getToken()}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        const json = await response.json().catch(() => null);
+        throw new Error(extractErrorMessage(json?.error));
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = attachment.fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (requestError) {
+      setError(requestError.message || "Failed to download attachment");
+    } finally {
+      setDownloadingUuid(null);
+    }
+  }
 
   async function handleRemove(documentUuid) {
     try {
@@ -93,14 +128,17 @@ export default function AppointmentAttachments({
                 <div className="flex items-center text-lg">
                   {getFileIcon(attachment.mimeType)}
                 </div>
-                <a
-                  href={`${API_BASE}/appointment/${appointmentUuid}/documents/${attachment.uuid}`}
-                  download={attachment.fileName}
-                  className="link link-primary min-w-0 flex-1 truncate text-sm"
+                <button
+                  type="button"
+                  className="link link-primary min-w-0 flex-1 truncate text-left text-sm"
                   title={attachment.fileName}
+                  onClick={() => handleDownload(attachment)}
+                  disabled={downloadingUuid === attachment.uuid}
                 >
-                  {attachment.fileName}
-                </a>
+                  {downloadingUuid === attachment.uuid
+                    ? "Downloading..."
+                    : attachment.fileName}
+                </button>
               </div>
               {canRemove && (
                 <button

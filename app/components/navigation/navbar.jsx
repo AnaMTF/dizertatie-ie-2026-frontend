@@ -47,6 +47,11 @@ function DoctorActions() {
         <FaStethoscope />
         My Appointments
       </Link>
+
+      <Link to="/doctor/profile" className="btn btn-sm btn-ghost">
+        <FaUserCircle />
+        Profile
+      </Link>
     </>
   );
 }

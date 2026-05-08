@@ -57,6 +57,33 @@ function parseDateKey(dateKey) {
   return new Date(year, month - 1, day);
 }
 
+function createEmptyForm() {
+  return {
+    specialty: "",
+    doctorUuid: "",
+    clinicUuid: "",
+    date: null,
+    time: "",
+    note: "",
+    documents: [],
+  };
+}
+
+function buildFormFromDraft(draft) {
+  const next = createEmptyForm();
+
+  if (!draft) {
+    return next;
+  }
+
+  next.specialty = draft.specialty || "";
+  next.doctorUuid = draft.doctorUuid || "";
+  next.clinicUuid = draft.clinicUuid || "";
+  next.date = draft.date ? parseDateKey(draft.date) : null;
+
+  return next;
+}
+
 function getTodayDateKey() {
   return getDateKey(new Date());
 }
@@ -473,17 +500,9 @@ function StepNotes({
   );
 }
 
-function CreateAppointmentForm({ onCreated }) {
+function CreateAppointmentForm({ onCreated, initialDraft }) {
   const [step, setStep] = useState(0);
-  const [form, setForm] = useState({
-    specialty: "",
-    doctorUuid: "",
-    clinicUuid: "",
-    date: null,
-    time: "",
-    note: "",
-    documents: [],
-  });
+  const [form, setForm] = useState(() => buildFormFromDraft(initialDraft));
   const [doctors, setDoctors] = useState([]);
   const [clinics, setClinics] = useState([]);
   const [loadingInitialData, setLoadingInitialData] = useState(true);
@@ -545,6 +564,18 @@ function CreateAppointmentForm({ onCreated }) {
     };
   }, []);
 
+  useEffect(() => {
+    if (!initialDraft?.seed) {
+      return;
+    }
+
+    setStep(1);
+    setForm(buildFormFromDraft(initialDraft));
+    setAvailabilityByDate({});
+    setSubmitError("");
+    setSubmitSuccess("");
+  }, [initialDraft?.seed]);
+
   async function loadDayAvailability(dateKey) {
     if (!form.doctorUuid) {
       return;
@@ -586,6 +617,22 @@ function CreateAppointmentForm({ onCreated }) {
     setSubmitError("");
     setSubmitSuccess("");
   }, [form.specialty, form.doctorUuid, form.clinicUuid, form.date, form.time]);
+
+  useEffect(() => {
+    if (!form.doctorUuid || !form.date) {
+      return;
+    }
+
+    const dateKey = getDateKey(form.date);
+
+    if (availabilityByDate[dateKey]) {
+      return;
+    }
+
+    loadDayAvailability(dateKey).catch(() => {
+      // StepDateTime handles day-level errors on explicit date changes.
+    });
+  }, [form.doctorUuid, form.date, availabilityByDate]);
 
   function handleChange(event) {
     setForm((prev) => ({ ...prev, [event.target.name]: event.target.value }));
@@ -669,15 +716,7 @@ function CreateAppointmentForm({ onCreated }) {
 
       setSubmitSuccess("Appointment booked successfully.");
       setStep(0);
-      setForm({
-        specialty: "",
-        doctorUuid: "",
-        clinicUuid: "",
-        date: null,
-        time: "",
-        note: "",
-        documents: [],
-      });
+      setForm(createEmptyForm());
       setAvailabilityByDate({});
 
       document.getElementById("create-appointment-modal")?.close();
@@ -759,7 +798,7 @@ function CreateAppointmentPhoto() {
   );
 }
 
-export default function CreateAppointment({ onCreated }) {
+export default function CreateAppointment({ onCreated, initialDraft = null }) {
   return (
     <dialog id="create-appointment-modal" className="modal">
       <div className="modal-box relative max-w-5xl overflow-hidden p-0">
@@ -769,7 +808,10 @@ export default function CreateAppointment({ onCreated }) {
           </button>
         </form>
         <div className="grid min-h-160 grid-cols-1 md:grid-cols-2">
-          <CreateAppointmentForm onCreated={onCreated} />
+          <CreateAppointmentForm
+            onCreated={onCreated}
+            initialDraft={initialDraft}
+          />
           <CreateAppointmentPhoto />
         </div>
       </div>

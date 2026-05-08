@@ -231,6 +231,10 @@ function UpcomingAppointments() {
                       ? `Dr. ${appointment.doctor.lastName}`
                       : "Assigned doctor"}
                   </p>
+                  <p className="text-base-content/50 truncate text-xs">
+                    {appointment.doctor?.specialization ||
+                      "Specialization unavailable"}
+                  </p>
                   {(() => {
                     const appointmentDate = toAppointmentDateTime(appointment);
 
@@ -260,6 +264,9 @@ function UpcomingAppointments() {
                       </p>
                     );
                   })()}
+                  <p className="text-base-content/50 truncate text-xs">
+                    {appointment.clinic?.name || "Clinic unavailable"}
+                  </p>
                 </div>
                 <StatusBadge status={appointment.status} />
               </div>
@@ -705,7 +712,10 @@ export default function Profile() {
                 </p>
 
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                  <Link to="/appointments" className="btn btn-primary w-full">
+                  <Link
+                    to="/appointments?create=true"
+                    className="btn btn-primary w-full"
+                  >
                     <FaCalendarPlus />
                     Create Appointment
                   </Link>

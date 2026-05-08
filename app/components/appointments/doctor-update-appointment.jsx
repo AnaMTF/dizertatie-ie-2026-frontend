@@ -1,8 +1,6 @@
 import { useEffect, useState } from "react";
 import { API_BASE, getToken } from "../../utils/auth";
 
-const TIME_SLOTS = ["09:00", "10:00", "11:00", "14:00", "15:00", "16:00"];
-
 function extractErrorMessage(error) {
   if (Array.isArray(error)) {
     return error[0]?.message || "Request validation failed";
@@ -19,24 +17,27 @@ export default function DoctorUpdateAppointmentModal({
   appointment,
   onUpdated,
 }) {
-  const [date, setDate] = useState("");
-  const [timeSlot, setTimeSlot] = useState("");
-  const [notes, setNotes] = useState("");
+  const [diagnosis, setDiagnosis] = useState("");
+  const [prescription, setPrescription] = useState("");
+  const [followUpRecommendation, setFollowUpRecommendation] = useState("");
+  const [followUpDate, setFollowUpDate] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (!appointment) {
-      setDate("");
-      setTimeSlot("");
-      setNotes("");
+      setDiagnosis("");
+      setPrescription("");
+      setFollowUpRecommendation("");
+      setFollowUpDate("");
       setError("");
       return;
     }
 
-    setDate(appointment.date || "");
-    setTimeSlot(appointment.timeSlot || "");
-    setNotes(appointment.notes || "");
+    setDiagnosis(appointment.doctorDiagnosis || "");
+    setPrescription(appointment.doctorPrescription || "");
+    setFollowUpRecommendation(appointment.doctorFollowUpRecommendation || "");
+    setFollowUpDate(appointment.doctorFollowUpDate || "");
     setError("");
   }, [appointment]);
 
@@ -45,8 +46,14 @@ export default function DoctorUpdateAppointmentModal({
       return;
     }
 
-    if (!date || !timeSlot) {
-      setError("Choose date and time slot.");
+    if (
+      !diagnosis.trim() ||
+      !prescription.trim() ||
+      !followUpRecommendation.trim()
+    ) {
+      setError(
+        "Diagnosis, prescription, and follow-up recommendation are required.",
+      );
       return;
     }
 
@@ -63,9 +70,10 @@ export default function DoctorUpdateAppointmentModal({
             Authorization: `Bearer ${getToken()}`,
           },
           body: JSON.stringify({
-            date,
-            timeSlot,
-            notes: notes || null,
+            doctorDiagnosis: diagnosis.trim(),
+            doctorPrescription: prescription.trim(),
+            doctorFollowUpRecommendation: followUpRecommendation.trim(),
+            doctorFollowUpDate: followUpDate || null,
           }),
         },
       );
@@ -79,7 +87,9 @@ export default function DoctorUpdateAppointmentModal({
       document.getElementById("doctor-update-appointment-modal")?.close();
       onUpdated?.();
     } catch (requestError) {
-      setError(requestError.message || "Failed to update appointment");
+      setError(
+        requestError.message || "Failed to save consultation results",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -88,46 +98,52 @@ export default function DoctorUpdateAppointmentModal({
   return (
     <dialog id="doctor-update-appointment-modal" className="modal">
       <div className="modal-box max-w-lg">
-        <h3 className="text-lg font-bold">Update appointment</h3>
+        <h3 className="text-lg font-bold">Consultation result</h3>
         <p className="text-base-content/60 mt-1 text-sm">
-          Reschedule this appointment or update consultation notes.
+          Save your diagnosis, prescription, and follow-up recommendation.
         </p>
 
         <div className="mt-4 flex flex-col gap-3">
           <label className="flex flex-col gap-1">
-            <span className="text-sm font-medium">Date</span>
-            <input
-              type="date"
-              className="input input-bordered w-full"
-              value={date}
-              onChange={(event) => setDate(event.target.value)}
+            <span className="text-sm font-medium">Diagnosis</span>
+            <textarea
+              className="textarea textarea-bordered w-full"
+              rows={4}
+              value={diagnosis}
+              onChange={(event) => setDiagnosis(event.target.value)}
+              placeholder="Write the clinical diagnosis"
             />
           </label>
 
           <label className="flex flex-col gap-1">
-            <span className="text-sm font-medium">Time slot</span>
-            <select
-              className="select select-bordered w-full"
-              value={timeSlot}
-              onChange={(event) => setTimeSlot(event.target.value)}
-            >
-              <option value="">Select time slot</option>
-              {TIME_SLOTS.map((slot) => (
-                <option key={slot} value={slot}>
-                  {slot}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="flex flex-col gap-1">
-            <span className="text-sm font-medium">Consultation notes</span>
+            <span className="text-sm font-medium">Prescription</span>
             <textarea
               className="textarea textarea-bordered w-full"
               rows={5}
-              value={notes}
-              onChange={(event) => setNotes(event.target.value)}
-              placeholder="Add or update notes for this appointment"
+              value={prescription}
+              onChange={(event) => setPrescription(event.target.value)}
+              placeholder="Add medications, dosage, and treatment instructions"
+            />
+          </label>
+
+          <label className="flex flex-col gap-1">
+            <span className="text-sm font-medium">Follow-up recommendation</span>
+            <textarea
+              className="textarea textarea-bordered w-full"
+              rows={4}
+              value={followUpRecommendation}
+              onChange={(event) => setFollowUpRecommendation(event.target.value)}
+              placeholder="Describe follow-up steps and consultation needs"
+            />
+          </label>
+
+          <label className="flex flex-col gap-1">
+            <span className="text-sm font-medium">Follow-up date (optional)</span>
+            <input
+              type="date"
+              className="input input-bordered w-full"
+              value={followUpDate}
+              onChange={(event) => setFollowUpDate(event.target.value)}
             />
           </label>
         </div>
@@ -148,7 +164,7 @@ export default function DoctorUpdateAppointmentModal({
             onClick={handleUpdate}
             disabled={submitting}
           >
-            {submitting ? "Updating..." : "Save changes"}
+            {submitting ? "Saving..." : "Save result"}
           </button>
         </div>
       </div>

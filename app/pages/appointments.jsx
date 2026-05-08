@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { redirect } from "react-router";
+import { redirect, useSearchParams } from "react-router";
+import AppointmentAttachments from "../components/appointments/appointment-attachments";
 import AppointmentsSidebar from "../components/appointments/appointments-sidebar";
 import AppointmentsTopBar from "../components/appointments/appointments-top-bar";
 import CancelAppointmentModal from "../components/appointments/cancel-appointment";
@@ -68,10 +69,149 @@ function StatusBadge({ status }) {
   return <span className={`badge badge-sm ${cls}`}>{label}</span>;
 }
 
+function formatDoctorName(doctor) {
+  if (!doctor) {
+    return "Assigned doctor";
+  }
+
+  return `Dr. ${doctor.firstName || ""} ${doctor.lastName || ""}`.trim();
+}
+
+function AppointmentDetailsModal({ appointment, onBookFollowUp }) {
+  return (
+    <dialog id="patient-appointment-details-modal" className="modal">
+      <div className="modal-box max-w-2xl">
+        <h3 className="text-lg font-bold">Appointment details</h3>
+
+        {!appointment ? (
+          <p className="text-base-content/60 mt-3 text-sm">
+            No appointment selected.
+          </p>
+        ) : (
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="card bg-base-200">
+              <div className="card-body p-4">
+                <p className="text-base-content/60 text-xs">Doctor</p>
+                <p className="font-semibold">{formatDoctorName(appointment.doctor)}</p>
+                <p className="text-base-content/70 text-sm">
+                  {appointment.doctor?.specialization || "-"}
+                </p>
+              </div>
+            </div>
+
+            <div className="card bg-base-200">
+              <div className="card-body p-4">
+                <p className="text-base-content/60 text-xs">Clinic</p>
+                <p className="font-semibold">{appointment.clinic?.name || "-"}</p>
+                <p className="text-base-content/70 text-sm">
+                  {appointment.clinic?.address || "No clinic address available"}
+                </p>
+              </div>
+            </div>
+
+            <div className="card bg-base-200 sm:col-span-2">
+              <div className="card-body p-4">
+                <p className="text-base-content/60 text-xs">Schedule</p>
+                <p className="font-semibold">{formatDateTime(appointment)}</p>
+                <div className="mt-2">
+                  <StatusBadge status={appointment.status} />
+                </div>
+              </div>
+            </div>
+
+            <div className="card bg-base-200 sm:col-span-2">
+              <div className="card-body p-4">
+                <p className="text-base-content/60 text-xs">Your notes</p>
+                <p className="text-sm whitespace-pre-wrap">
+                  {appointment.notes?.trim() || "No notes for this appointment."}
+                </p>
+              </div>
+            </div>
+
+            <div className="card bg-base-200 sm:col-span-2">
+              <div className="card-body p-4">
+                <p className="text-base-content/60 text-xs">Consultation result</p>
+                <div className="mt-2 space-y-3">
+                  <div>
+                    <p className="text-base-content/60 text-xs">Diagnosis</p>
+                    <p className="text-sm whitespace-pre-wrap">
+                      {appointment.doctorDiagnosis?.trim() || "Not available yet."}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-base-content/60 text-xs">Prescription</p>
+                    <p className="text-sm whitespace-pre-wrap">
+                      {appointment.doctorPrescription?.trim() ||
+                        "Not available yet."}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-base-content/60 text-xs">
+                      Follow-up recommendation
+                    </p>
+                    <p className="text-sm whitespace-pre-wrap">
+                      {appointment.doctorFollowUpRecommendation?.trim() ||
+                        "Not available yet."}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-base-content/60 text-xs">Follow-up date</p>
+                    <p className="text-sm">
+                      {appointment.doctorFollowUpDate || "Not set."}
+                    </p>
+                  </div>
+                  {appointment.doctorFollowUpDate && appointment.doctor?.uuid ? (
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-primary"
+                      onClick={() => onBookFollowUp?.(appointment)}
+                    >
+                      Book follow-up with same doctor
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+
+            {appointment.documents?.length > 0 ? (
+              <div className="sm:col-span-2">
+                <AppointmentAttachments
+                  appointmentUuid={appointment.uuid}
+                  attachments={appointment.documents}
+                  isPatient={false}
+                  appointmentStatus={appointment.status}
+                />
+              </div>
+            ) : null}
+
+            {appointment.cancellationReason ? (
+              <div className="card bg-base-200 sm:col-span-2">
+                <div className="card-body p-4">
+                  <p className="text-base-content/60 text-xs">
+                    Cancellation reason
+                  </p>
+                  <p className="text-sm">{appointment.cancellationReason}</p>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        )}
+
+        <div className="mt-6 flex justify-end">
+          <form method="dialog">
+            <button className="btn btn-ghost">Close</button>
+          </form>
+        </div>
+      </div>
+    </dialog>
+  );
+}
+
 function AppointmentsTable({
   appointments,
   loading,
   error,
+  onView,
   onUpdate,
   onCancel,
 }) {
@@ -140,6 +280,13 @@ function AppointmentsTable({
                     <div className="flex gap-2">
                       <button
                         type="button"
+                        className="btn btn-xs btn-ghost"
+                        onClick={() => onView(appointment)}
+                      >
+                        View
+                      </button>
+                      <button
+                        type="button"
                         className="btn btn-xs btn-outline"
                         onClick={() => onUpdate(appointment)}
                         disabled={
@@ -173,12 +320,15 @@ function AppointmentsTable({
 }
 
 export default function Appointments() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [showUpcomingOnly, setShowUpcomingOnly] = useState(false);
   const [activeAppointment, setActiveAppointment] = useState(null);
+  const [detailsAppointment, setDetailsAppointment] = useState(null);
+  const [createAppointmentDraft, setCreateAppointmentDraft] = useState(null);
 
   const loadAppointments = useCallback(async () => {
     try {
@@ -209,6 +359,21 @@ export default function Appointments() {
     loadAppointments();
   }, [loadAppointments]);
 
+  useEffect(() => {
+    if (searchParams.get("create") !== "true") {
+      return;
+    }
+
+    openCreateModal();
+
+    setSearchParams((previous) => {
+      const next = Object.fromEntries(previous);
+      delete next.create;
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, setSearchParams]);
+
   const visibleAppointments = useMemo(() => {
     const now = Date.now();
 
@@ -231,13 +396,39 @@ export default function Appointments() {
     });
   }, [appointments, showUpcomingOnly, statusFilter]);
 
-  function openCreateModal() {
+  function openCreateModal(draft = null) {
+    setCreateAppointmentDraft(draft);
     document.getElementById("create-appointment-modal")?.showModal();
   }
 
   function openUpdateModal(appointment) {
     setActiveAppointment(appointment);
     document.getElementById("update-appointment-modal")?.showModal();
+  }
+
+  function openDetailsModal(appointment) {
+    setDetailsAppointment(appointment);
+    document.getElementById("patient-appointment-details-modal")?.showModal();
+  }
+
+  function bookFollowUpWithSameDoctor(appointment) {
+    const doctorUuid = appointment.doctor?.uuid;
+    const clinicUuid = appointment.clinic?.uuid || appointment.doctor?.clinicUuid;
+    const followUpDate = appointment.doctorFollowUpDate;
+
+    if (!doctorUuid || !clinicUuid || !followUpDate) {
+      return;
+    }
+
+    document.getElementById("patient-appointment-details-modal")?.close();
+
+    openCreateModal({
+      seed: Date.now(),
+      specialty: appointment.doctor?.specialization || "",
+      doctorUuid,
+      clinicUuid,
+      date: followUpDate,
+    });
   }
 
   function openCancelModal(appointment) {
@@ -264,6 +455,7 @@ export default function Appointments() {
           appointments={visibleAppointments}
           loading={loading}
           error={error}
+          onView={openDetailsModal}
           onUpdate={openUpdateModal}
           onCancel={openCancelModal}
         />
@@ -276,15 +468,28 @@ export default function Appointments() {
               ? `Dr. ${appointment.doctor.lastName}`
               : "Assigned doctor"
           }
+          getSecondaryText={(appointment) =>
+            appointment.doctor?.specialization || "Specialization unavailable"
+          }
+          getTertiaryText={(appointment) =>
+            appointment.clinic?.name || "Clinic unavailable"
+          }
           renderStatusBadge={(status) => <StatusBadge status={status} />}
           nextTitle="Next appointment"
           emptyNextText="No upcoming appointment."
         />
       </div>
-      <CreateAppointment onCreated={loadAppointments} />
+      <CreateAppointment
+        onCreated={loadAppointments}
+        initialDraft={createAppointmentDraft}
+      />
       <UpdateAppointmentModal
         appointment={activeAppointment}
         onUpdated={loadAppointments}
+      />
+      <AppointmentDetailsModal
+        appointment={detailsAppointment}
+        onBookFollowUp={bookFollowUpWithSameDoctor}
       />
       <CancelAppointmentModal
         appointment={activeAppointment}

@@ -11,6 +11,8 @@ export default function AppointmentsSidebar({
   toDateTime,
   formatDateTime,
   getPrimaryText,
+  getSecondaryText,
+  getTertiaryText,
   renderStatusBadge,
   nextTitle = "Next appointment",
   emptyNextText = "No upcoming appointment.",
@@ -50,9 +52,19 @@ export default function AppointmentsSidebar({
               <p className="text-sm font-medium">
                 {getPrimaryText(nextAppointment)}
               </p>
+              {getSecondaryText ? (
+                <p className="text-base-content/60 text-xs">
+                  {getSecondaryText(nextAppointment)}
+                </p>
+              ) : null}
               <p className="text-base-content/60 text-sm">
                 {formatDateTime(nextAppointment)}
               </p>
+              {getTertiaryText ? (
+                <p className="text-base-content/50 text-xs">
+                  {getTertiaryText(nextAppointment)}
+                </p>
+              ) : null}
               {renderStatusBadge(nextAppointment.status)}
             </>
           ) : (

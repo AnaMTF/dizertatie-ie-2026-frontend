@@ -1,11 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { redirect } from "react-router";
+import { redirect, useSearchParams } from "react-router";
 import AppointmentAttachments from "../components/appointments/appointment-attachments";
 import AppointmentsSidebar from "../components/appointments/appointments-sidebar";
 import AppointmentsTopBar from "../components/appointments/appointments-top-bar";
 import CancelAppointmentModal from "../components/appointments/cancel-appointment";
 import DoctorUpdateAppointmentModal from "../components/appointments/doctor-update-appointment";
 import { API_BASE, getToken, getUser } from "../utils/auth";
+
+const DOCTOR_STATUS_OPTIONS = [
+  { value: "all", label: "All statuses" },
+  { value: "actionRequired", label: "Action required" },
+  { value: "scheduled", label: "Scheduled" },
+  { value: "confirmed", label: "Confirmed" },
+  { value: "rescheduled", label: "Rescheduled" },
+  { value: "completed", label: "Completed" },
+  { value: "cancelled", label: "Cancelled" },
+];
 
 export function clientLoader() {
   if (!getToken()) return redirect("/?login=true");
@@ -120,11 +130,53 @@ function AppointmentDetailsModal({ appointment }) {
 
             <div className="card bg-base-200 sm:col-span-2">
               <div className="card-body p-4">
-                <p className="text-base-content/60 text-xs">Notes</p>
+                <p className="text-base-content/60 text-xs">Patient notes</p>
                 <p className="text-sm whitespace-pre-wrap">
                   {appointment.notes?.trim() ||
                     "No notes for this appointment."}
                 </p>
+              </div>
+            </div>
+
+            <div className="card bg-base-200 sm:col-span-2">
+              <div className="card-body p-4">
+                <p className="text-base-content/60 text-xs">
+                  Consultation result
+                </p>
+                <div className="mt-2 space-y-3">
+                  <div>
+                    <p className="text-base-content/60 text-xs">Diagnosis</p>
+                    <p className="text-sm whitespace-pre-wrap">
+                      {appointment.doctorDiagnosis?.trim() || "Not provided."}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-base-content/60 text-xs">
+                      Prescription
+                    </p>
+                    <p className="text-sm whitespace-pre-wrap">
+                      {appointment.doctorPrescription?.trim() ||
+                        "Not provided."}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-base-content/60 text-xs">
+                      Follow-up recommendation
+                    </p>
+                    <p className="text-sm whitespace-pre-wrap">
+                      {appointment.doctorFollowUpRecommendation?.trim() ||
+                        "Not provided."}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-base-content/60 text-xs">
+                      Follow-up date
+                    </p>
+                    <p className="text-sm">
+                      {appointment.doctorFollowUpDate || "Not set."}
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -167,7 +219,7 @@ function AppointmentsTable({
   loading,
   error,
   onView,
-  onUpdate,
+  onEditResult,
   onCancel,
   onConfirm,
   onComplete,
@@ -253,10 +305,10 @@ function AppointmentsTable({
                         <button
                           type="button"
                           className="btn btn-xs btn-ghost"
-                          onClick={() => onUpdate(appointment)}
+                          onClick={() => onEditResult(appointment)}
                           disabled={isFinalized}
                         >
-                          Update
+                          Consultation result
                         </button>
                         <button
                           type="button"
@@ -302,11 +354,16 @@ function AppointmentsTable({
 }
 
 export default function DoctorAppointmentsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [showUpcomingOnly, setShowUpcomingOnly] = useState(false);
+  const [statusFilter, setStatusFilter] = useState(
+    searchParams.get("status") || "all",
+  );
+  const [showUpcomingOnly, setShowUpcomingOnly] = useState(
+    searchParams.get("upcoming") === "true",
+  );
   const [activeAppointment, setActiveAppointment] = useState(null);
   const [detailsAppointment, setDetailsAppointment] = useState(null);
   const [actionLoadingUuid, setActionLoadingUuid] = useState("");
@@ -344,8 +401,19 @@ export default function DoctorAppointmentsPage() {
     const now = Date.now();
 
     return appointments.filter((appointment) => {
-      if (statusFilter !== "all" && appointment.status !== statusFilter) {
-        return false;
+      // Handle status filtering
+      if (statusFilter !== "all") {
+        if (statusFilter === "actionRequired") {
+          // Show scheduled and rescheduled appointments
+          if (
+            appointment.status !== "scheduled" &&
+            appointment.status !== "rescheduled"
+          ) {
+            return false;
+          }
+        } else if (appointment.status !== statusFilter) {
+          return false;
+        }
       }
 
       if (!showUpcomingOnly) {
@@ -408,15 +476,48 @@ export default function DoctorAppointmentsPage() {
     document.getElementById("cancel-appointment-modal")?.showModal();
   }
 
+  function handleStatusFilterChange(newStatus) {
+    setStatusFilter(newStatus);
+    setSearchParams((previous) => {
+      const next = Object.fromEntries(previous);
+
+      if (newStatus === "all") {
+        delete next.status;
+      } else {
+        next.status = newStatus;
+      }
+
+      return next;
+    });
+  }
+
+  function handleToggleUpcomingOnly() {
+    const newValue = !showUpcomingOnly;
+    setShowUpcomingOnly(newValue);
+    if (newValue) {
+      setSearchParams((prev) => ({
+        ...Object.fromEntries(prev),
+        upcoming: "true",
+      }));
+    } else {
+      setSearchParams((prev) => {
+        const newParams = Object.fromEntries(prev);
+        delete newParams.upcoming;
+        return newParams;
+      });
+    }
+  }
+
   return (
     <div className="flex h-full flex-col gap-4 px-9 pt-6">
       <AppointmentsTopBar
         title="My consultations"
-        subtitle="Confirm, complete, update, and cancel your consultations."
+        subtitle="Confirm, complete, cancel, and manage consultation results."
         statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
+        onStatusFilterChange={handleStatusFilterChange}
+        statusOptions={DOCTOR_STATUS_OPTIONS}
         showUpcomingOnly={showUpcomingOnly}
-        onToggleUpcomingOnly={() => setShowUpcomingOnly((prev) => !prev)}
+        onToggleUpcomingOnly={handleToggleUpcomingOnly}
         onRefresh={loadAppointments}
         refreshing={loading}
       />
@@ -433,7 +534,7 @@ export default function DoctorAppointmentsPage() {
           loading={loading}
           error={error}
           onView={openDetailsModal}
-          onUpdate={openUpdateModal}
+          onEditResult={openUpdateModal}
           onCancel={openCancelModal}
           onConfirm={(appointment) => updateStatus(appointment, "confirmed")}
           onComplete={(appointment) => updateStatus(appointment, "completed")}
@@ -445,6 +546,12 @@ export default function DoctorAppointmentsPage() {
           formatDateTime={formatDateTime}
           getPrimaryText={(appointment) =>
             formatPatientName(appointment.patient)
+          }
+          getSecondaryText={(appointment) =>
+            appointment.doctor?.specialization || "Specialization unavailable"
+          }
+          getTertiaryText={(appointment) =>
+            appointment.clinic?.name || "Clinic unavailable"
           }
           renderStatusBadge={(status) => <StatusBadge status={status} />}
           nextTitle="Next consultation"
