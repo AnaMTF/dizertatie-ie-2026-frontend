@@ -3,6 +3,7 @@ import {
   FaBell,
   FaCalendarAlt,
   FaMedkit,
+  FaNewspaper,
   FaSearch,
   FaSignInAlt,
   FaSignOutAlt,
@@ -10,7 +11,7 @@ import {
   FaUserCircle,
   FaUserPlus,
 } from "react-icons/fa";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import Login from "../authentication/login";
 import Logout from "../authentication/logout";
 import Register from "../authentication/register";
@@ -20,6 +21,11 @@ function PatientActions() {
     <>
       <Link to="/ai-scan" className="btn btn-sm btn-primary">
         AI Scan
+      </Link>
+
+      <Link to="/blog" className="btn btn-sm btn-ghost">
+        <FaNewspaper />
+        Blog
       </Link>
 
       <Link to="/notifications" className="btn btn-sm btn-ghost">
@@ -46,6 +52,11 @@ function DoctorActions() {
       <Link to="/doctor/appointments" className="btn btn-sm btn-primary">
         <FaStethoscope />
         My Appointments
+      </Link>
+
+      <Link to="/blog" className="btn btn-sm btn-ghost">
+        <FaNewspaper />
+        Blog
       </Link>
 
       <Link to="/doctor/profile" className="btn btn-sm btn-ghost">
@@ -87,6 +98,11 @@ function LoggedOutActions() {
 
   return (
     <>
+      <Link to="/blog" className="btn btn-sm btn-ghost">
+        <FaNewspaper />
+        Blog
+      </Link>
+
       <button onClick={handleLogin} className="btn btn-sm btn-ghost">
         <FaSignInAlt />
         Login
@@ -105,9 +121,16 @@ function LoggedOutActions() {
 export function Navbar({ user = null }) {
   const [searchValue, setSearchValue] = useState("");
   const isLoggedIn = Boolean(user);
+  const navigate = useNavigate();
 
   function handleSearch() {
-    // TODO: implement search logic
+    const q = searchValue.trim();
+    if (!q) return;
+    navigate(`/blog?q=${encodeURIComponent(q)}`);
+  }
+
+  function handleSearchKeyDown(event) {
+    if (event.key === "Enter") handleSearch();
   }
 
   return (
@@ -125,6 +148,7 @@ export function Navbar({ user = null }) {
           className="input input-accent input-sm bg-base-200 text-base-content placeholder-base-content/50 w-xl"
           value={searchValue}
           onChange={(event) => setSearchValue(event.target.value)}
+          onKeyDown={handleSearchKeyDown}
         />
         <button onClick={handleSearch} className="btn btn-sm btn-accent">
           <FaSearch />

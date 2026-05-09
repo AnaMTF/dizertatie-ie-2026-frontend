@@ -3,6 +3,10 @@ import { index, route } from "@react-router/dev/routes";
 export default [
   index("pages/index.jsx"),
 
+  /* Blog */
+  route("/blog", "pages/blog.jsx"),
+  route("/blog/:slug", "pages/blog-post.jsx"),
+
   /* Only a logged in user can access thiese routes */
   route("/profile", "pages/profile.jsx"),
   route("/appointments", "pages/appointments.jsx"),
