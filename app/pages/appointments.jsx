@@ -92,7 +92,9 @@ function AppointmentDetailsModal({ appointment, onBookFollowUp }) {
             <div className="card bg-base-200">
               <div className="card-body p-4">
                 <p className="text-base-content/60 text-xs">Doctor</p>
-                <p className="font-semibold">{formatDoctorName(appointment.doctor)}</p>
+                <p className="font-semibold">
+                  {formatDoctorName(appointment.doctor)}
+                </p>
                 <p className="text-base-content/70 text-sm">
                   {appointment.doctor?.specialization || "-"}
                 </p>
@@ -102,7 +104,9 @@ function AppointmentDetailsModal({ appointment, onBookFollowUp }) {
             <div className="card bg-base-200">
               <div className="card-body p-4">
                 <p className="text-base-content/60 text-xs">Clinic</p>
-                <p className="font-semibold">{appointment.clinic?.name || "-"}</p>
+                <p className="font-semibold">
+                  {appointment.clinic?.name || "-"}
+                </p>
                 <p className="text-base-content/70 text-sm">
                   {appointment.clinic?.address || "No clinic address available"}
                 </p>
@@ -123,19 +127,23 @@ function AppointmentDetailsModal({ appointment, onBookFollowUp }) {
               <div className="card-body p-4">
                 <p className="text-base-content/60 text-xs">Your notes</p>
                 <p className="text-sm whitespace-pre-wrap">
-                  {appointment.notes?.trim() || "No notes for this appointment."}
+                  {appointment.notes?.trim() ||
+                    "No notes for this appointment."}
                 </p>
               </div>
             </div>
 
             <div className="card bg-base-200 sm:col-span-2">
               <div className="card-body p-4">
-                <p className="text-base-content/60 text-xs">Consultation result</p>
+                <p className="text-base-content/60 text-xs">
+                  Consultation result
+                </p>
                 <div className="mt-2 space-y-3">
                   <div>
                     <p className="text-base-content/60 text-xs">Diagnosis</p>
                     <p className="text-sm whitespace-pre-wrap">
-                      {appointment.doctorDiagnosis?.trim() || "Not available yet."}
+                      {appointment.doctorDiagnosis?.trim() ||
+                        "Not available yet."}
                     </p>
                   </div>
                   <div>
@@ -155,12 +163,15 @@ function AppointmentDetailsModal({ appointment, onBookFollowUp }) {
                     </p>
                   </div>
                   <div>
-                    <p className="text-base-content/60 text-xs">Follow-up date</p>
+                    <p className="text-base-content/60 text-xs">
+                      Follow-up date
+                    </p>
                     <p className="text-sm">
                       {appointment.doctorFollowUpDate || "Not set."}
                     </p>
                   </div>
-                  {appointment.doctorFollowUpDate && appointment.doctor?.uuid ? (
+                  {appointment.doctorFollowUpDate &&
+                  appointment.doctor?.uuid ? (
                     <button
                       type="button"
                       className="btn btn-sm btn-primary"
@@ -364,11 +375,21 @@ export default function Appointments() {
       return;
     }
 
-    openCreateModal();
+    const specialty = searchParams.get("specialty")?.trim() || "";
+
+    openCreateModal(
+      specialty
+        ? {
+            seed: Date.now(),
+            specialty,
+          }
+        : null,
+    );
 
     setSearchParams((previous) => {
       const next = Object.fromEntries(previous);
       delete next.create;
+      delete next.specialty;
       return next;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -413,7 +434,8 @@ export default function Appointments() {
 
   function bookFollowUpWithSameDoctor(appointment) {
     const doctorUuid = appointment.doctor?.uuid;
-    const clinicUuid = appointment.clinic?.uuid || appointment.doctor?.clinicUuid;
+    const clinicUuid =
+      appointment.clinic?.uuid || appointment.doctor?.clinicUuid;
     const followUpDate = appointment.doctorFollowUpDate;
 
     if (!doctorUuid || !clinicUuid || !followUpDate) {
