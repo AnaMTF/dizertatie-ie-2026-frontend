@@ -14,6 +14,13 @@ import { API_BASE, setAuth } from "../../utils/auth";
 import StepActions from "../common/step-actions";
 
 const SEX_OPTIONS = ["Man", "Woman"];
+const ALCOHOL_FREQUENCY_OPTIONS = [
+  { value: "never", label: "Never" },
+  { value: "less_than_monthly", label: "Less than monthly" },
+  { value: "monthly", label: "Monthly" },
+  { value: "weekly", label: "Weekly" },
+  { value: "daily_or_almost_daily", label: "Daily or almost daily" },
+];
 
 function isAtLeast18(dateStr) {
   if (!dateStr) return false;
@@ -328,6 +335,12 @@ function StepAdditionalInfo({
   error,
   loading,
 }) {
+  const isValid =
+    ["yes", "no"].includes(values.smoker) &&
+    ALCOHOL_FREQUENCY_OPTIONS.some(
+      (option) => option.value === values.alcoholConsumptionFrequency,
+    );
+
   return (
     <form className="flex h-full flex-col gap-4">
       <h2 className="flex items-center gap-2 text-2xl font-bold">
@@ -336,6 +349,42 @@ function StepAdditionalInfo({
       <p className="text-base-content/60 text-sm">
         Tell us anything else you&apos;d like your doctor to know.
       </p>
+      <div className="grid gap-4 md:grid-cols-2">
+        <label className="floating-label">
+          <select
+            name="smoker"
+            className="select w-full"
+            value={values.smoker}
+            onChange={onChange}
+          >
+            <option value="" disabled>
+              Select smoker status
+            </option>
+            <option value="yes">Yes</option>
+            <option value="no">No</option>
+          </select>
+          <span>Are you a smoker?</span>
+        </label>
+
+        <label className="floating-label">
+          <select
+            name="alcoholConsumptionFrequency"
+            className="select w-full"
+            value={values.alcoholConsumptionFrequency}
+            onChange={onChange}
+          >
+            <option value="" disabled>
+              Select alcohol frequency
+            </option>
+            {ALCOHOL_FREQUENCY_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+          <span>Alcohol consumption frequency</span>
+        </label>
+      </div>
       <textarea
         className="textarea w-full flex-1"
         name="additionalInfo"
@@ -353,7 +402,8 @@ function StepAdditionalInfo({
         onNext={onSubmit}
         onBack={onBack}
         nextLabel={loading ? "Creating..." : "Create Account"}
-        disabled={loading}
+        disabled={loading || !isValid}
+        tooltipMessage="Please answer the smoking and alcohol questions to continue"
       />
     </form>
   );
@@ -371,6 +421,8 @@ function RegisterForm() {
     dateOfBirth: "",
     height: "",
     weight: "",
+    smoker: "",
+    alcoholConsumptionFrequency: "",
     additionalInfo: "",
   });
   const [error, setError] = useState(null);
@@ -405,6 +457,8 @@ function RegisterForm() {
           dateOfBirth: form.dateOfBirth,
           height: parseFloat(form.height),
           weight: parseFloat(form.weight),
+          smoker: form.smoker === "yes",
+          alcoholConsumptionFrequency: form.alcoholConsumptionFrequency,
           additionalMedicalInfo: form.additionalInfo,
         }),
       });
