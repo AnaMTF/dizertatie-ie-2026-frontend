@@ -3,6 +3,18 @@ import { FaCalendarPlus, FaRobot, FaUserEdit } from "react-icons/fa";
 import { Link, redirect, useLoaderData } from "react-router";
 import { API_BASE, getToken, getUser, setAuth } from "../utils/auth";
 
+const ALCOHOL_FREQUENCY_OPTIONS = [
+  { value: "never", label: "Never" },
+  { value: "less_than_monthly", label: "Less than monthly" },
+  { value: "monthly", label: "Monthly" },
+  { value: "weekly", label: "Weekly" },
+  { value: "daily_or_almost_daily", label: "Daily or almost daily" },
+];
+
+function alcoholLabel(value) {
+  return ALCOHOL_FREQUENCY_OPTIONS.find((o) => o.value === value)?.label ?? "—";
+}
+
 export function clientLoader() {
   if (!getToken()) return redirect("/?login=true");
   const user = getUser();
@@ -302,10 +314,23 @@ export default function Profile() {
   const [notesSaveSuccess, setNotesSaveSuccess] = useState(null);
   const [isSavingNotes, setIsSavingNotes] = useState(false);
 
+  const [isEditingLifestyle, setIsEditingLifestyle] = useState(false);
+  const [lifestyleForm, setLifestyleForm] = useState({
+    smoker: user.smoker === true ? "yes" : user.smoker === false ? "no" : "",
+    alcoholConsumptionFrequency: user.alcoholConsumptionFrequency || "",
+  });
+  const [lifestyleSaveError, setLifestyleSaveError] = useState(null);
+  const [lifestyleSaveSuccess, setLifestyleSaveSuccess] = useState(null);
+  const [isSavingLifestyle, setIsSavingLifestyle] = useState(false);
+
   useEffect(() => {
     setProfileUser(user);
     setPersonalForm(buildProfileForm(user));
     setNotesForm(user.additionalMedicalInfo || "");
+    setLifestyleForm({
+      smoker: user.smoker === true ? "yes" : user.smoker === false ? "no" : "",
+      alcoholConsumptionFrequency: user.alcoholConsumptionFrequency || "",
+    });
   }, [user]);
 
   const fullName = `${profileUser.firstName} ${profileUser.lastName}`;
@@ -376,6 +401,16 @@ export default function Profile() {
       setProfileUser(json.data);
       setPersonalForm(buildProfileForm(json.data));
       setNotesForm(json.data.additionalMedicalInfo || "");
+      setLifestyleForm({
+        smoker:
+          json.data.smoker === true
+            ? "yes"
+            : json.data.smoker === false
+              ? "no"
+              : "",
+        alcoholConsumptionFrequency:
+          json.data.alcoholConsumptionFrequency || "",
+      });
       setAuth({ user: json.data, token });
 
       return { error: null };
@@ -698,6 +733,165 @@ export default function Profile() {
                     {profileUser.additionalMedicalInfo ||
                       "No additional information provided."}
                   </p>
+                )}
+              </div>
+            </div>
+
+            <div className="card bg-base-200 shadow">
+              <div className="card-body p-4">
+                <div className="mb-2 flex items-center justify-between">
+                  <h2 className="text-base-content/40 text-xs font-semibold tracking-widest uppercase">
+                    Lifestyle
+                  </h2>
+                  {!isEditingLifestyle && (
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-sm"
+                      onClick={() => {
+                        setLifestyleSaveError(null);
+                        setLifestyleSaveSuccess(null);
+                        setIsEditingLifestyle(true);
+                      }}
+                    >
+                      <FaUserEdit />
+                      Edit
+                    </button>
+                  )}
+                </div>
+
+                {lifestyleSaveError && (
+                  <div className="alert alert-error mb-3">
+                    <span>{lifestyleSaveError}</span>
+                  </div>
+                )}
+
+                {lifestyleSaveSuccess && (
+                  <div className="alert alert-success mb-3">
+                    <span>{lifestyleSaveSuccess}</span>
+                  </div>
+                )}
+
+                {isEditingLifestyle ? (
+                  <div className="flex flex-col gap-3">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label className="floating-label">
+                        <select
+                          name="smoker"
+                          className="select w-full"
+                          value={lifestyleForm.smoker}
+                          onChange={(e) =>
+                            setLifestyleForm((prev) => ({
+                              ...prev,
+                              smoker: e.target.value,
+                            }))
+                          }
+                        >
+                          <option value="">Select</option>
+                          <option value="yes">Yes</option>
+                          <option value="no">No</option>
+                        </select>
+                        <span>Are you a smoker?</span>
+                      </label>
+
+                      <label className="floating-label">
+                        <select
+                          name="alcoholConsumptionFrequency"
+                          className="select w-full"
+                          value={lifestyleForm.alcoholConsumptionFrequency}
+                          onChange={(e) =>
+                            setLifestyleForm((prev) => ({
+                              ...prev,
+                              alcoholConsumptionFrequency: e.target.value,
+                            }))
+                          }
+                        >
+                          <option value="">Select</option>
+                          {ALCOHOL_FREQUENCY_OPTIONS.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                        <span>Alcohol consumption frequency</span>
+                      </label>
+                    </div>
+
+                    <div className="mt-2 flex gap-2">
+                      <button
+                        type="button"
+                        className="btn btn-primary"
+                        disabled={isSavingLifestyle}
+                        onClick={async () => {
+                          setIsSavingLifestyle(true);
+                          setLifestyleSaveError(null);
+                          setLifestyleSaveSuccess(null);
+                          const payload = {
+                            smoker: lifestyleForm.smoker === "yes",
+                            alcoholConsumptionFrequency:
+                              lifestyleForm.alcoholConsumptionFrequency ||
+                              undefined,
+                          };
+                          const { error } = await patchProfile(payload);
+                          if (error) {
+                            setLifestyleSaveError(error);
+                          } else {
+                            setLifestyleSaveSuccess(
+                              "Lifestyle information updated.",
+                            );
+                            setIsEditingLifestyle(false);
+                          }
+                          setIsSavingLifestyle(false);
+                        }}
+                      >
+                        {isSavingLifestyle ? (
+                          <span className="loading loading-spinner loading-sm" />
+                        ) : (
+                          "Save changes"
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-ghost"
+                        disabled={isSavingLifestyle}
+                        onClick={() => {
+                          setLifestyleForm({
+                            smoker:
+                              profileUser.smoker === true
+                                ? "yes"
+                                : profileUser.smoker === false
+                                  ? "no"
+                                  : "",
+                            alcoholConsumptionFrequency:
+                              profileUser.alcoholConsumptionFrequency || "",
+                          });
+                          setLifestyleSaveError(null);
+                          setLifestyleSaveSuccess(null);
+                          setIsEditingLifestyle(false);
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <InfoRow
+                      label="Smoker"
+                      value={
+                        profileUser.smoker === true
+                          ? "Yes"
+                          : profileUser.smoker === false
+                            ? "No"
+                            : null
+                      }
+                    />
+                    <InfoRow
+                      label="Alcohol consumption"
+                      value={alcoholLabel(
+                        profileUser.alcoholConsumptionFrequency,
+                      )}
+                    />
+                  </>
                 )}
               </div>
             </div>
