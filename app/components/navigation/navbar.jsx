@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   FaBell,
   FaCalendarAlt,
@@ -12,11 +12,42 @@ import {
   FaUserPlus,
 } from "react-icons/fa";
 import { Link, useNavigate } from "react-router";
+import {
+  NOTIFICATIONS_UNREAD_CHANGED_EVENT,
+  getUnreadNotificationCount,
+} from "../../utils/notifications";
 import Login from "../authentication/login";
 import Logout from "../authentication/logout";
 import Register from "../authentication/register";
 
 function PatientActions() {
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const refreshUnreadCount = useCallback(async () => {
+    try {
+      const count = await getUnreadNotificationCount();
+      setUnreadCount(count);
+    } catch {
+      // swallow; badge simply stays at last known value
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshUnreadCount();
+
+    window.addEventListener(
+      NOTIFICATIONS_UNREAD_CHANGED_EVENT,
+      refreshUnreadCount,
+    );
+
+    return () => {
+      window.removeEventListener(
+        NOTIFICATIONS_UNREAD_CHANGED_EVENT,
+        refreshUnreadCount,
+      );
+    };
+  }, [refreshUnreadCount]);
+
   return (
     <>
       <Link to="/ai-scan" className="btn btn-sm btn-primary">
@@ -28,9 +59,14 @@ function PatientActions() {
         Blog
       </Link>
 
-      <Link to="/notifications" className="btn btn-sm btn-ghost">
+      <Link to="/notifications" className="indicator btn btn-sm btn-ghost">
         <FaBell />
         Notifications
+        {unreadCount > 0 && (
+          <span className="badge badge-info badge-xs indicator-item">
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </span>
+        )}
       </Link>
 
       <Link to="/appointments" className="btn btn-sm btn-ghost">

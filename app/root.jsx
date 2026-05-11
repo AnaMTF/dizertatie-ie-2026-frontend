@@ -9,6 +9,7 @@ import {
 } from "react-router";
 import { Navbar } from "./components/navigation/navbar";
 import { AUTH_CHANGED_EVENT, getUser } from "./utils/auth";
+import { NOTIFICATIONS_UNREAD_CHANGED_EVENT } from "./utils/notifications";
 
 import "./app.css";
 
@@ -58,10 +59,32 @@ export default function App() {
       return;
     }
 
-    navigator.serviceWorker.register("/sw.js").catch(() => {
-      // silently fail; app can still work without push
+    navigator.serviceWorker.register("/sw.js").catch((error) => {
+      console.warn("Service worker registration failed", error);
     });
   }, []);
+
+  useEffect(() => {
+    if (
+      typeof window === "undefined" ||
+      !("serviceWorker" in navigator) ||
+      !currentUser
+    ) {
+      return;
+    }
+
+    function handleSWMessage(event) {
+      if (event.data?.type === "push-notification-received") {
+        window.dispatchEvent(new Event(NOTIFICATIONS_UNREAD_CHANGED_EVENT));
+      }
+    }
+
+    navigator.serviceWorker.addEventListener("message", handleSWMessage);
+
+    return () => {
+      navigator.serviceWorker.removeEventListener("message", handleSWMessage);
+    };
+  }, [currentUser]);
 
   return (
     <>
