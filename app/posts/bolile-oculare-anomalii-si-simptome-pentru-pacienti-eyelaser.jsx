@@ -9,7 +9,6 @@ export const meta = {
 export const relatedSpecialties = ["ophthalmology"];
 
 export default function BolileOculareAnomaliiEyelaser() {
-
   return (
     <article>
       <h2>Anomaliile clasice ale ochiului sub formă de vedere defectuoasă</h2>

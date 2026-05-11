@@ -9,7 +9,6 @@ export const meta = {
 export const relatedSpecialties = ["neurology"];
 
 export default function AfectiunileCreieruluiCeBoli() {
-
   return (
     <article>
       <p>

@@ -9,7 +9,6 @@ export const meta = {
 export const relatedSpecialties = ["cardiology"];
 
 export default function BolileCardiovasculareCategoriiReginamaria() {
-
   return (
     <article>
       <p>

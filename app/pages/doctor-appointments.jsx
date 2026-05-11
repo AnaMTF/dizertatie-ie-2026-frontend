@@ -151,9 +151,7 @@ function AppointmentDetailsModal({ appointment }) {
                     </p>
                   </div>
                   <div>
-                    <p className="text-base-content/60 text-xs">
-                      Prescription
-                    </p>
+                    <p className="text-base-content/60 text-xs">Prescription</p>
                     <p className="text-sm whitespace-pre-wrap">
                       {appointment.doctorPrescription?.trim() ||
                         "Not provided."}

@@ -9,7 +9,6 @@ export const meta = {
 export const relatedSpecialties = ["neurology"];
 
 export default function AfectiuniNeurologiceKinomed() {
-
   return (
     <article>
       <p>

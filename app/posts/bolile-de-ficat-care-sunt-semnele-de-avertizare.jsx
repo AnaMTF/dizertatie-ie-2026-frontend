@@ -9,7 +9,6 @@ export const meta = {
 export const relatedSpecialties = ["gastroenterology"];
 
 export default function BolileDeFicatSemneleDeAvertizare() {
-
   return (
     <article>
       <p>

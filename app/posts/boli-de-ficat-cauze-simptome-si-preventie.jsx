@@ -9,7 +9,6 @@ export const meta = {
 export const relatedSpecialties = ["gastroenterology"];
 
 export default function BoliDeFicatCauzeSimptome() {
-
   return (
     <article>
       <p>

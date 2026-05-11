@@ -9,7 +9,6 @@ export const meta = {
 export const relatedSpecialties = ["ophthalmology"];
 
 export default function AfectiuniOchiuluiMedLife() {
-
   return (
     <article>
       <p>

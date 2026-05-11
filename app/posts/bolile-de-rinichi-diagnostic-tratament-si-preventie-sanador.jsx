@@ -9,7 +9,6 @@ export const meta = {
 export const relatedSpecialties = ["urology"];
 
 export default function BolileDeRinichiSanador() {
-
   return (
     <article>
       <h2>Ce sunt bolile de rinichi</h2>

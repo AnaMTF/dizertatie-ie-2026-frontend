@@ -9,7 +9,6 @@ export const meta = {
 export const relatedSpecialties = ["pulmonology"];
 
 export default function BolilePulmonareSanador() {
-
   return (
     <article>
       <h2>Ce sunt bolile pulmonare</h2>

@@ -10,7 +10,6 @@ export const meta = {
 export const relatedSpecialties = ["cardiology"];
 
 export default function BolileCardiovasculareTypuriMedlife() {
-
   return (
     <article>
       <h2>Impactul bolilor cardiovasculare</h2>

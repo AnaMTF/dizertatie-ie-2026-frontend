@@ -87,9 +87,7 @@ export default function DoctorUpdateAppointmentModal({
       document.getElementById("doctor-update-appointment-modal")?.close();
       onUpdated?.();
     } catch (requestError) {
-      setError(
-        requestError.message || "Failed to save consultation results",
-      );
+      setError(requestError.message || "Failed to save consultation results");
     } finally {
       setSubmitting(false);
     }
@@ -127,18 +125,24 @@ export default function DoctorUpdateAppointmentModal({
           </label>
 
           <label className="flex flex-col gap-1">
-            <span className="text-sm font-medium">Follow-up recommendation</span>
+            <span className="text-sm font-medium">
+              Follow-up recommendation
+            </span>
             <textarea
               className="textarea textarea-bordered w-full"
               rows={4}
               value={followUpRecommendation}
-              onChange={(event) => setFollowUpRecommendation(event.target.value)}
+              onChange={(event) =>
+                setFollowUpRecommendation(event.target.value)
+              }
               placeholder="Describe follow-up steps and consultation needs"
             />
           </label>
 
           <label className="flex flex-col gap-1">
-            <span className="text-sm font-medium">Follow-up date (optional)</span>
+            <span className="text-sm font-medium">
+              Follow-up date (optional)
+            </span>
             <input
               type="date"
               className="input input-bordered w-full"

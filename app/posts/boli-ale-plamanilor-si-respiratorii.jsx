@@ -9,7 +9,6 @@ export const meta = {
 export const relatedSpecialties = ["pulmonology"];
 
 export default function BoliPlamanilor() {
-
   return (
     <article>
       <h2>Despre plămâni</h2>

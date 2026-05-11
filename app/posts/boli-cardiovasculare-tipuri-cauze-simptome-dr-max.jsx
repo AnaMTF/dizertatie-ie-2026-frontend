@@ -10,7 +10,6 @@ export const meta = {
 export const relatedSpecialties = ["cardiology"];
 
 export default function BoliCardiovasculareDrMax() {
-
   return (
     <article>
       <p>

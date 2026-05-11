@@ -9,7 +9,6 @@ export const meta = {
 export const relatedSpecialties = ["urology"];
 
 export default function BolileRenaleDeRinichi() {
-
   return (
     <article>
       <h2>Generalități</h2>
