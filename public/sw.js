@@ -22,14 +22,32 @@ self.addEventListener("push", (event) => {
     data: payload.data || {},
   };
 
-  event.waitUntil(self.registration.showNotification(title, options));
+  event.waitUntil(
+    Promise.all([
+      self.registration.showNotification(title, options),
+      self.clients
+        .matchAll({ type: "window", includeUncontrolled: true })
+        .then((clients) => {
+          for (const client of clients) {
+            client.postMessage({ type: "push-notification-received" });
+          }
+        }),
+    ]),
+  );
 });
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
-  const targetPath = event.notification.data?.url || "/";
-  const targetUrl = new URL(targetPath, self.location.origin).href;
+  const data = event.notification.data ?? {};
+  const targetPath = data.url || "/";
+
+  let targetUrl;
+  try {
+    targetUrl = new URL(targetPath, self.location.origin).href;
+  } catch {
+    targetUrl = new URL("/", self.location.origin).href;
+  }
 
   event.waitUntil(
     self.clients
