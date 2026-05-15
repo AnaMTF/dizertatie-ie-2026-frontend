@@ -21,6 +21,19 @@ import {
   isPushSupported,
 } from "../utils/push";
 
+const DEFAULT_PAGE = 1;
+const DEFAULT_LIMIT = 20;
+const PAGE_SIZE_OPTIONS = [10, 20, 50];
+
+function toPositiveInt(value, fallback) {
+  const parsed = Number.parseInt(value ?? "", 10);
+  if (!Number.isFinite(parsed) || parsed < 1) {
+    return fallback;
+  }
+
+  return parsed;
+}
+
 export function clientLoader() {
   if (!getToken()) return redirect("/?login=true");
   const user = getUser();
@@ -72,23 +85,29 @@ export default function NotificationsPage() {
     [items],
   );
 
-  const loadNotifications = useCallback(async (page = 1) => {
-    setLoading(true);
-    setError("");
+  const loadNotifications = useCallback(
+    async (page = DEFAULT_PAGE, limit = DEFAULT_LIMIT) => {
+      setLoading(true);
+      setError("");
 
-    try {
-      const result = await listNotifications({ page, limit: 20 });
-      setItems(result.items);
-      setPagination(result.pagination);
-    } catch (requestError) {
-      setError(extractErrorMessage(requestError));
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      try {
+        const result = await listNotifications({ page, limit });
+        setItems(result.items);
+        setPagination((current) => ({
+          ...current,
+          ...result.pagination,
+        }));
+      } catch (requestError) {
+        setError(extractErrorMessage(requestError));
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
-    loadNotifications(1);
+    loadNotifications(DEFAULT_PAGE);
   }, [loadNotifications]);
 
   useEffect(() => {
@@ -194,14 +213,63 @@ export default function NotificationsPage() {
   }
 
   function handlePreviousPage() {
-    const nextPage = Math.max(1, pagination.page - 1);
-    loadNotifications(nextPage);
+    const nextPage = Math.max(DEFAULT_PAGE, pagination.page - 1);
+    loadNotifications(nextPage, pagination.limit);
   }
 
   function handleNextPage() {
     const nextPage = Math.min(pagination.totalPages, pagination.page + 1);
-    loadNotifications(nextPage);
+    loadNotifications(nextPage, pagination.limit);
   }
+
+  function handleLimitChange(event) {
+    const nextLimit = toPositiveInt(event.target.value, DEFAULT_LIMIT);
+    loadNotifications(DEFAULT_PAGE, nextLimit);
+  }
+
+  const paginationControls = (
+    <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="text-base-content/70 flex min-w-max items-center gap-2 text-sm">
+        <span className="whitespace-nowrap">Notifications per page</span>
+        <select
+          className="select select-bordered select-sm"
+          value={pagination.limit}
+          onChange={handleLimitChange}
+          disabled={loading}
+        >
+          {PAGE_SIZE_OPTIONS.map((value) => (
+            <option key={value} value={value}>
+              {value}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          className="btn btn-sm btn-ghost"
+          onClick={handlePreviousPage}
+          disabled={pagination.page <= DEFAULT_PAGE || loading}
+        >
+          Previous
+        </button>
+
+        <p className="text-base-content/60 text-sm">
+          Page {pagination.page} / {Math.max(1, pagination.totalPages)}
+        </p>
+
+        <button
+          type="button"
+          className="btn btn-sm btn-ghost"
+          onClick={handleNextPage}
+          disabled={pagination.page >= pagination.totalPages || loading}
+        >
+          Next
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="px-9 pt-6 pb-10">
@@ -260,6 +328,8 @@ export default function NotificationsPage() {
             <span>{error}</span>
           </div>
         )}
+
+        <div>{paginationControls}</div>
 
         <div className="card bg-base-200 shadow">
           <div className="card-body p-0">
@@ -330,29 +400,7 @@ export default function NotificationsPage() {
           </div>
         </div>
 
-        <div className="flex items-center justify-between">
-          <button
-            type="button"
-            className="btn btn-sm btn-ghost"
-            onClick={handlePreviousPage}
-            disabled={pagination.page <= 1 || loading}
-          >
-            Previous
-          </button>
-
-          <p className="text-base-content/60 text-sm">
-            Page {pagination.page} / {Math.max(1, pagination.totalPages)}
-          </p>
-
-          <button
-            type="button"
-            className="btn btn-sm btn-ghost"
-            onClick={handleNextPage}
-            disabled={pagination.page >= pagination.totalPages || loading}
-          >
-            Next
-          </button>
-        </div>
+        <div>{paginationControls}</div>
       </div>
     </div>
   );
