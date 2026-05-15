@@ -709,36 +709,36 @@ export default function Appointments() {
         createLabel="Create Appointment"
       />
       <div className="flex min-h-0 flex-1 flex-col items-stretch gap-6 lg:flex-row">
-        <div className="flex min-h-0 flex-1 flex-col gap-6">
+        <AppointmentsTable
+          appointments={visibleAppointments}
+          loading={loading}
+          error={error}
+          onView={openDetailsModal}
+          onUpdate={openUpdateModal}
+          onCancel={openCancelModal}
+        />
+        <div className="flex w-full shrink-0 flex-col gap-4 lg:w-88">
           <AppointmentsCalendar appointments={visibleAppointments} />
-          <AppointmentsTable
-            appointments={visibleAppointments}
-            loading={loading}
-            error={error}
-            onView={openDetailsModal}
-            onUpdate={openUpdateModal}
-            onCancel={openCancelModal}
+          <AppointmentsSidebar
+            appointments={appointments}
+            toDateTime={toDateTime}
+            formatDateTime={formatDateTime}
+            getPrimaryText={(appointment) =>
+              appointment.doctor
+                ? `Dr. ${appointment.doctor.lastName}`
+                : "Assigned doctor"
+            }
+            getSecondaryText={(appointment) =>
+              appointment.doctor?.specialization || "Specialization unavailable"
+            }
+            getTertiaryText={(appointment) =>
+              appointment.clinic?.name || "Clinic unavailable"
+            }
+            renderStatusBadge={(status) => <StatusBadge status={status} />}
+            nextTitle="Next appointment"
+            emptyNextText="No upcoming appointment."
           />
         </div>
-        <AppointmentsSidebar
-          appointments={appointments}
-          toDateTime={toDateTime}
-          formatDateTime={formatDateTime}
-          getPrimaryText={(appointment) =>
-            appointment.doctor
-              ? `Dr. ${appointment.doctor.lastName}`
-              : "Assigned doctor"
-          }
-          getSecondaryText={(appointment) =>
-            appointment.doctor?.specialization || "Specialization unavailable"
-          }
-          getTertiaryText={(appointment) =>
-            appointment.clinic?.name || "Clinic unavailable"
-          }
-          renderStatusBadge={(status) => <StatusBadge status={status} />}
-          nextTitle="Next appointment"
-          emptyNextText="No upcoming appointment."
-        />
       </div>
       <CreateAppointment
         onCreated={loadAppointments}
