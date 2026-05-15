@@ -16,6 +16,7 @@ function extractErrorMessage(error) {
 export default function DoctorUpdateAppointmentModal({
   appointment,
   onUpdated,
+  shouldComplete = false,
 }) {
   const [diagnosis, setDiagnosis] = useState("");
   const [prescription, setPrescription] = useState("");
@@ -41,7 +42,7 @@ export default function DoctorUpdateAppointmentModal({
     setError("");
   }, [appointment]);
 
-  async function handleUpdate() {
+  async function handleUpdate(completeAppointment = false) {
     if (!appointment?.uuid) {
       return;
     }
@@ -61,6 +62,17 @@ export default function DoctorUpdateAppointmentModal({
       setSubmitting(true);
       setError("");
 
+      const payload = {
+        doctorDiagnosis: diagnosis.trim(),
+        doctorPrescription: prescription.trim(),
+        doctorFollowUpRecommendation: followUpRecommendation.trim(),
+        doctorFollowUpDate: followUpDate || null,
+      };
+
+      if (completeAppointment) {
+        payload.status = "completed";
+      }
+
       const response = await fetch(
         `${API_BASE}/appointment/${appointment.uuid}`,
         {
@@ -69,12 +81,7 @@ export default function DoctorUpdateAppointmentModal({
             "Content-Type": "application/json",
             Authorization: `Bearer ${getToken()}`,
           },
-          body: JSON.stringify({
-            doctorDiagnosis: diagnosis.trim(),
-            doctorPrescription: prescription.trim(),
-            doctorFollowUpRecommendation: followUpRecommendation.trim(),
-            doctorFollowUpDate: followUpDate || null,
-          }),
+          body: JSON.stringify(payload),
         },
       );
 
@@ -162,14 +169,25 @@ export default function DoctorUpdateAppointmentModal({
           <form method="dialog" className="flex-1">
             <button className="btn btn-ghost w-full">Close</button>
           </form>
-          <button
-            type="button"
-            className="btn btn-primary flex-1"
-            onClick={handleUpdate}
-            disabled={submitting}
-          >
-            {submitting ? "Saving..." : "Save result"}
-          </button>
+          {shouldComplete ? (
+            <button
+              type="button"
+              className="btn btn-accent flex-1"
+              onClick={() => handleUpdate(true)}
+              disabled={submitting}
+            >
+              {submitting ? "Completing..." : "Complete"}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="btn btn-primary flex-1"
+              onClick={() => handleUpdate(false)}
+              disabled={submitting}
+            >
+              {submitting ? "Saving..." : "Save result"}
+            </button>
+          )}
         </div>
       </div>
     </dialog>

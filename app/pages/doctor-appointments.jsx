@@ -277,10 +277,6 @@ function AppointmentsTable({
                 const canComplete =
                   appointment.status === "confirmed" ||
                   appointment.status === "rescheduled";
-                const hasConsultationResult =
-                  appointment.doctorDiagnosis?.trim() &&
-                  appointment.doctorPrescription?.trim() &&
-                  appointment.doctorFollowUpRecommendation?.trim();
 
                 return (
                   <tr key={appointment.uuid}>
@@ -306,14 +302,6 @@ function AppointmentsTable({
                         </button>
                         <button
                           type="button"
-                          className="btn btn-xs btn-ghost"
-                          onClick={() => onEditResult(appointment)}
-                          disabled={isFinalized}
-                        >
-                          Consultation result
-                        </button>
-                        <button
-                          type="button"
                           className="btn btn-xs btn-success"
                           onClick={() => onConfirm(appointment)}
                           disabled={
@@ -323,27 +311,17 @@ function AppointmentsTable({
                         >
                           Confirm
                         </button>
-                        <div
-                          className="tooltip"
-                          data-tip={
-                            !hasConsultationResult
-                              ? "Diagnosis, prescription, and follow-up recommendation are required"
-                              : ""
+                        <button
+                          type="button"
+                          className="btn btn-xs btn-accent"
+                          onClick={() => onEditResult(appointment, true)}
+                          disabled={
+                            !canComplete ||
+                            actionLoadingUuid === appointment.uuid
                           }
                         >
-                          <button
-                            type="button"
-                            className="btn btn-xs btn-accent"
-                            onClick={() => onComplete(appointment)}
-                            disabled={
-                              !canComplete ||
-                              actionLoadingUuid === appointment.uuid ||
-                              !hasConsultationResult
-                            }
-                          >
-                            Complete
-                          </button>
-                        </div>
+                          Complete
+                        </button>
                         <button
                           type="button"
                           className="btn btn-xs btn-error"
@@ -377,6 +355,8 @@ export default function DoctorAppointmentsPage() {
     searchParams.get("upcoming") === "true",
   );
   const [activeAppointment, setActiveAppointment] = useState(null);
+  const [shouldCompleteAppointment, setShouldCompleteAppointment] =
+    useState(false);
   const [detailsAppointment, setDetailsAppointment] = useState(null);
   const [actionLoadingUuid, setActionLoadingUuid] = useState("");
 
@@ -478,8 +458,9 @@ export default function DoctorAppointmentsPage() {
     document.getElementById("doctor-appointment-details-modal")?.showModal();
   }
 
-  function openUpdateModal(appointment) {
+  function openUpdateModal(appointment, forCompletion = false) {
     setActiveAppointment(appointment);
+    setShouldCompleteAppointment(forCompletion);
     document.getElementById("doctor-update-appointment-modal")?.showModal();
   }
 
@@ -575,6 +556,7 @@ export default function DoctorAppointmentsPage() {
       <DoctorUpdateAppointmentModal
         appointment={activeAppointment}
         onUpdated={loadAppointments}
+        shouldComplete={shouldCompleteAppointment}
       />
       <CancelAppointmentModal
         appointment={activeAppointment}
