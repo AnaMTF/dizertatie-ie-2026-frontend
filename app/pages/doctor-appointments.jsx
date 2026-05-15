@@ -343,6 +343,216 @@ function AppointmentsTable({
   );
 }
 
+function ConsultationsCalendar({ appointments }) {
+  const now = new Date();
+  const [displayedMonth, setDisplayedMonth] = useState(
+    () => new Date(now.getFullYear(), now.getMonth(), 1),
+  );
+  const year = displayedMonth.getFullYear();
+  const month = displayedMonth.getMonth();
+
+  const firstDayOfMonth = new Date(year, month, 1);
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const daysInPreviousMonth = new Date(year, month, 0).getDate();
+
+  const firstWeekday = (firstDayOfMonth.getDay() + 6) % 7;
+  const totalCells = 42;
+
+  const appointmentsInCurrentMonth = appointments.filter((appointment) => {
+    const date = toDateTime(appointment);
+    return (
+      date &&
+      !Number.isNaN(date.getTime()) &&
+      date.getFullYear() === year &&
+      date.getMonth() === month
+    );
+  });
+
+  const dayAppointmentsMap = appointmentsInCurrentMonth.reduce(
+    (acc, appointment) => {
+      const date = toDateTime(appointment);
+      const day = date.getDate();
+
+      if (!acc[day]) {
+        acc[day] = [];
+      }
+
+      acc[day].push(appointment);
+      return acc;
+    },
+    {},
+  );
+
+  const defaultSelectedDay =
+    year === now.getFullYear() && month === now.getMonth() ? now.getDate() : 1;
+  const [selectedDay, setSelectedDay] = useState(defaultSelectedDay);
+
+  useEffect(() => {
+    setSelectedDay(defaultSelectedDay);
+  }, [defaultSelectedDay]);
+
+  const safeSelectedDay = Math.min(selectedDay, daysInMonth);
+  const selectedDayAppointments = dayAppointmentsMap[safeSelectedDay] || [];
+
+  const calendarCells = Array.from({ length: totalCells }, (_, index) => {
+    const dateNumber = index - firstWeekday + 1;
+
+    if (dateNumber <= 0) {
+      return {
+        key: `prev-${index}`,
+        inMonth: false,
+        dateNumber: daysInPreviousMonth + dateNumber,
+      };
+    }
+
+    if (dateNumber > daysInMonth) {
+      return {
+        key: `next-${index}`,
+        inMonth: false,
+        dateNumber: dateNumber - daysInMonth,
+      };
+    }
+
+    return {
+      key: `current-${dateNumber}`,
+      inMonth: true,
+      dateNumber,
+      dotCount: dayAppointmentsMap[dateNumber]?.length || 0,
+      isSelected: dateNumber === safeSelectedDay,
+    };
+  });
+
+  const monthLabel = displayedMonth.toLocaleDateString("en-GB", {
+    month: "long",
+    year: "numeric",
+  });
+
+  const weekdays = ["M", "T", "W", "T", "F", "S", "S"];
+  const highlightedAppointment = selectedDayAppointments
+    .filter((appointment) => appointment.status !== "cancelled")
+    .sort((a, b) => toDateTime(a).getTime() - toDateTime(b).getTime())[0];
+
+  function showPreviousMonth() {
+    setDisplayedMonth(
+      (previous) =>
+        new Date(previous.getFullYear(), previous.getMonth() - 1, 1),
+    );
+  }
+
+  function showNextMonth() {
+    setDisplayedMonth(
+      (previous) =>
+        new Date(previous.getFullYear(), previous.getMonth() + 1, 1),
+    );
+  }
+
+  return (
+    <div className="card bg-base-100 border-base-200 border shadow">
+      <div className="card-body p-5">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-base-content/60 text-xs">Calendar</p>
+            <h3 className="text-base font-semibold capitalize">{monthLabel}</h3>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              className="btn btn-ghost btn-xs"
+              onClick={showPreviousMonth}
+              aria-label="Show previous month"
+            >
+              &lt;
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost btn-xs"
+              onClick={showNextMonth}
+              aria-label="Show next month"
+            >
+              &gt;
+            </button>
+            <span className="badge badge-outline">
+              {appointmentsInCurrentMonth.length} consultations
+            </span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-7 gap-2 text-center">
+          {weekdays.map((day, index) => (
+            <div
+              key={`${day}-${index}`}
+              className="text-base-content/50 py-1 text-xs font-semibold"
+            >
+              {day}
+            </div>
+          ))}
+
+          {calendarCells.map((cell) => (
+            <button
+              type="button"
+              key={cell.key}
+              disabled={!cell.inMonth}
+              onClick={() => cell.inMonth && setSelectedDay(cell.dateNumber)}
+              className={`relative flex h-11 items-center justify-center rounded-xl text-sm font-medium ${
+                cell.inMonth
+                  ? "bg-base-200 text-base-content"
+                  : "text-base-content/35"
+              } ${
+                cell.isSelected ? "bg-primary text-primary-content" : ""
+              } ${cell.inMonth ? "cursor-pointer" : "cursor-default"}`}
+            >
+              {cell.dateNumber}
+              {cell.inMonth && cell.dotCount > 0 ? (
+                <span className="absolute bottom-1.5 left-1/2 flex -translate-x-1/2 gap-0.5">
+                  {Array.from({ length: cell.dotCount }, (_, index) => (
+                    <span
+                      key={`${cell.key}-dot-${index}`}
+                      className={`h-1.5 w-1.5 rounded-full ${
+                        cell.isSelected ? "bg-primary-content" : "bg-primary"
+                      }`}
+                    />
+                  ))}
+                </span>
+              ) : null}
+            </button>
+          ))}
+        </div>
+
+        <div className="bg-primary/10 mt-5 rounded-xl p-4">
+          <p className="text-primary text-xs font-semibold">Selected day</p>
+          <p className="mt-1 font-semibold">
+            {new Date(year, month, safeSelectedDay).toLocaleDateString(
+              "en-GB",
+              {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              },
+            )}
+          </p>
+          <p className="text-base-content/70 mt-1 text-sm">
+            {highlightedAppointment
+              ? selectedDayAppointments.length === 1
+                ? `1 consultation at ${toDateTime(
+                    highlightedAppointment,
+                  ).toLocaleTimeString("en-GB", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}`
+                : `${selectedDayAppointments.length} consultations, earliest at ${toDateTime(
+                    highlightedAppointment,
+                  ).toLocaleTimeString("en-GB", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}`
+              : "No consultations for the selected day."}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function DoctorAppointmentsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [appointments, setAppointments] = useState([]);
@@ -533,23 +743,26 @@ export default function DoctorAppointmentsPage() {
           onComplete={(appointment) => updateStatus(appointment, "completed")}
           actionLoadingUuid={actionLoadingUuid}
         />
-        <AppointmentsSidebar
-          appointments={appointments}
-          toDateTime={toDateTime}
-          formatDateTime={formatDateTime}
-          getPrimaryText={(appointment) =>
-            formatPatientName(appointment.patient)
-          }
-          getSecondaryText={(appointment) =>
-            appointment.doctor?.specialization || "Specialization unavailable"
-          }
-          getTertiaryText={(appointment) =>
-            appointment.clinic?.name || "Clinic unavailable"
-          }
-          renderStatusBadge={(status) => <StatusBadge status={status} />}
-          nextTitle="Next consultation"
-          emptyNextText="No upcoming consultation."
-        />
+        <div className="flex w-full shrink-0 flex-col gap-4 lg:w-88">
+          <ConsultationsCalendar appointments={visibleAppointments} />
+          <AppointmentsSidebar
+            appointments={appointments}
+            toDateTime={toDateTime}
+            formatDateTime={formatDateTime}
+            getPrimaryText={(appointment) =>
+              formatPatientName(appointment.patient)
+            }
+            getSecondaryText={(appointment) =>
+              appointment.doctor?.specialization || "Specialization unavailable"
+            }
+            getTertiaryText={(appointment) =>
+              appointment.clinic?.name || "Clinic unavailable"
+            }
+            renderStatusBadge={(status) => <StatusBadge status={status} />}
+            nextTitle="Next consultation"
+            emptyNextText="No upcoming consultation."
+          />
+        </div>
       </div>
 
       <AppointmentDetailsModal appointment={detailsAppointment} />
