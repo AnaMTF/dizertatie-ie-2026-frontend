@@ -223,46 +223,54 @@ export default function Blog() {
   );
 
   return (
-    <div className="container mx-auto max-w-3xl px-4 py-12">
-      <h1 className="mb-2 text-4xl font-bold">Blog</h1>
+    <div className="px-9 pt-6 pb-10">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+        <div>
+          <h1 className="mb-2 text-4xl font-bold">Blog</h1>
 
-      {query && (
-        <p className="text-base-content/60 mb-8">
-          {loading ? "Searching..." : error ? error : `Results for "${query}"`}
-        </p>
-      )}
+          {query && (
+            <p className="text-base-content/60">
+              {loading
+                ? "Searching..."
+                : error
+                  ? error
+                  : `Results for "${query}"`}
+            </p>
+          )}
 
-      {!query && <p className="text-base-content/60 mb-8">Latest posts</p>}
+          {!query && <p className="text-base-content/60">Latest posts</p>}
+        </div>
 
-      {!loading && visiblePosts.length === 0 && (
-        <p className="text-base-content/50">No posts found.</p>
-      )}
+        {!loading && visiblePosts.length === 0 && (
+          <p className="text-base-content/50">No posts found.</p>
+        )}
 
-      <div className="mb-6">{paginationControls}</div>
+        <div>{paginationControls}</div>
 
-      <div className="flex flex-col gap-6">
-        {visiblePosts.map((post) => (
-          <Link
-            key={post.meta.slug}
-            to={`/blog/${post.meta.slug}`}
-            className="card bg-base-200 hover:bg-base-300 transition-colors"
-          >
-            <div className="card-body">
-              <h2 className="card-title">{post.meta.title}</h2>
-              <p className="text-base-content/70">{post.meta.summary}</p>
-              <p className="text-base-content/50 mt-1 text-sm">
-                {new Date(post.meta.publishedAt).toLocaleDateString("en-GB", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </p>
-            </div>
-          </Link>
-        ))}
+        <div className="flex flex-col gap-6">
+          {visiblePosts.map((post) => (
+            <Link
+              key={post.meta.slug}
+              to={`/blog/${post.meta.slug}`}
+              className="card bg-base-200 hover:bg-base-300 transition-colors"
+            >
+              <div className="card-body">
+                <h2 className="card-title">{post.meta.title}</h2>
+                <p className="text-base-content/70">{post.meta.summary}</p>
+                <p className="text-base-content/50 mt-1 text-sm">
+                  {new Date(post.meta.publishedAt).toLocaleDateString("en-GB", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </p>
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        <div>{paginationControls}</div>
       </div>
-
-      <div className="mt-8">{paginationControls}</div>
     </div>
   );
 }
