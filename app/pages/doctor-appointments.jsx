@@ -277,6 +277,10 @@ function AppointmentsTable({
                 const canComplete =
                   appointment.status === "confirmed" ||
                   appointment.status === "rescheduled";
+                const hasConsultationResult =
+                  appointment.doctorDiagnosis?.trim() &&
+                  appointment.doctorPrescription?.trim() &&
+                  appointment.doctorFollowUpRecommendation?.trim();
 
                 return (
                   <tr key={appointment.uuid}>
@@ -319,17 +323,27 @@ function AppointmentsTable({
                         >
                           Confirm
                         </button>
-                        <button
-                          type="button"
-                          className="btn btn-xs btn-accent"
-                          onClick={() => onComplete(appointment)}
-                          disabled={
-                            !canComplete ||
-                            actionLoadingUuid === appointment.uuid
+                        <div
+                          className="tooltip"
+                          data-tip={
+                            !hasConsultationResult
+                              ? "Diagnosis, prescription, and follow-up recommendation are required"
+                              : ""
                           }
                         >
-                          Complete
-                        </button>
+                          <button
+                            type="button"
+                            className="btn btn-xs btn-accent"
+                            onClick={() => onComplete(appointment)}
+                            disabled={
+                              !canComplete ||
+                              actionLoadingUuid === appointment.uuid ||
+                              !hasConsultationResult
+                            }
+                          >
+                            Complete
+                          </button>
+                        </div>
                         <button
                           type="button"
                           className="btn btn-xs btn-error"
