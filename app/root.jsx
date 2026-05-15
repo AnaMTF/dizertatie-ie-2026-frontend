@@ -10,6 +10,7 @@ import {
 import { Navbar } from "./components/navigation/navbar";
 import { AUTH_CHANGED_EVENT, getUser } from "./utils/auth";
 import { NOTIFICATIONS_UNREAD_CHANGED_EVENT } from "./utils/notifications";
+import { enablePushNotifications } from "./utils/push";
 
 import "./app.css";
 
@@ -63,6 +64,21 @@ export default function App() {
       console.warn("Service worker registration failed", error);
     });
   }, []);
+
+  useEffect(() => {
+    if (
+      typeof window === "undefined" ||
+      !("serviceWorker" in navigator) ||
+      !currentUser ||
+      currentUser.role === "doctor"
+    ) {
+      return;
+    }
+
+    enablePushNotifications().catch(() => {
+      // Silently fail: user may have denied permissions or push not supported
+    });
+  }, [currentUser]);
 
   useEffect(() => {
     if (
