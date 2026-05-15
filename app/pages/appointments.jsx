@@ -395,6 +395,31 @@ export default function Appointments() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, setSearchParams]);
 
+  useEffect(() => {
+    const appointmentUuid = searchParams.get("appointment");
+
+    if (!appointmentUuid || loading) {
+      return;
+    }
+
+    const appointment = appointments.find(
+      (item) => item.uuid === appointmentUuid,
+    );
+
+    if (!appointment) {
+      return;
+    }
+
+    openDetailsModal(appointment);
+
+    setSearchParams((previous) => {
+      const next = Object.fromEntries(previous);
+      delete next.appointment;
+      return next;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appointments, loading, searchParams, setSearchParams]);
+
   const visibleAppointments = useMemo(() => {
     const now = Date.now();
 
