@@ -56,6 +56,7 @@ function buildProfileForm(user) {
     dateOfBirth: user.dateOfBirth || "",
     height: user.height != null ? String(user.height) : "",
     weight: user.weight != null ? String(user.weight) : "",
+    favoriteClinicUuid: user.favoriteClinicUuid || "",
   };
 }
 
@@ -67,6 +68,10 @@ function buildUpdatePayload(form, user) {
     sex: form.sex,
     dateOfBirth: form.dateOfBirth,
   };
+
+  if (form.favoriteClinicUuid) {
+    nextData.favoriteClinicUuid = form.favoriteClinicUuid;
+  }
 
   if (form.height !== "") {
     const height = Number(form.height);
@@ -304,6 +309,8 @@ export default function Profile() {
   const [personalForm, setPersonalForm] = useState(() =>
     buildProfileForm(user),
   );
+  const [clinics, setClinics] = useState([]);
+  const [clinicsLoading, setClinicsLoading] = useState(true);
   const [personalSaveError, setPersonalSaveError] = useState(null);
   const [personalSaveSuccess, setPersonalSaveSuccess] = useState(null);
   const [isSavingPersonal, setIsSavingPersonal] = useState(false);
@@ -333,12 +340,36 @@ export default function Profile() {
     });
   }, [user]);
 
+  useEffect(() => {
+    async function loadClinics() {
+      try {
+        setClinicsLoading(true);
+        const response = await fetch(`${API_BASE}/clinic`);
+        const json = await response.json().catch(() => null);
+
+        if (!response.ok) {
+          return;
+        }
+
+        setClinics(json?.data ?? []);
+      } finally {
+        setClinicsLoading(false);
+      }
+    }
+
+    loadClinics();
+  }, []);
+
   const fullName = `${profileUser.firstName} ${profileUser.lastName}`;
 
   function handleFormChange(event) {
     const { name, value } = event.target;
     setPersonalForm((previous) => ({ ...previous, [name]: value }));
   }
+
+  const favoriteClinicName =
+    clinics.find((clinic) => clinic.uuid === profileUser.favoriteClinicUuid)
+      ?.name || null;
 
   function handleStartEditing() {
     setPersonalSaveError(null);
@@ -585,6 +616,24 @@ export default function Profile() {
                       </label>
                     </div>
 
+                    <label className="floating-label">
+                      <select
+                        name="favoriteClinicUuid"
+                        className="select w-full"
+                        value={personalForm.favoriteClinicUuid}
+                        onChange={handleFormChange}
+                        disabled={clinicsLoading}
+                      >
+                        <option value="">Select favorite clinic</option>
+                        {clinics.map((clinic) => (
+                          <option key={clinic.uuid} value={clinic.uuid}>
+                            {clinic.name}
+                          </option>
+                        ))}
+                      </select>
+                      <span>Favorite clinic</span>
+                    </label>
+
                     <div className="grid gap-3 sm:grid-cols-2">
                       <label className="floating-label">
                         <input
@@ -655,6 +704,12 @@ export default function Profile() {
                       label="Weight"
                       value={
                         profileUser.weight ? `${profileUser.weight} kg` : null
+                      }
+                    />
+                    <InfoRow
+                      label="Favorite clinic"
+                      value={
+                        favoriteClinicName || profileUser.favoriteClinicUuid
                       }
                     />
                   </>

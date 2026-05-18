@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { FaEye, FaPlus, FaRobot, FaSyncAlt } from "react-icons/fa";
-import { redirect, useSearchParams } from "react-router";
+import { Link, redirect, useSearchParams } from "react-router";
 import CreateScan from "../components/scans/create-scan";
 import { API_BASE, getToken, getUser } from "../utils/auth";
 
@@ -224,6 +224,19 @@ function buildScanRegions(scanOptions) {
   return Array.from(regionMap.values());
 }
 
+function resolveRecommendedSpecialty(scan, scanOptions) {
+  if (!scan) {
+    return "";
+  }
+
+  const matchedOption = scanOptions.find(
+    (option) =>
+      option.bodyPart === scan.bodyPart && option.imageType === scan.imageType,
+  );
+
+  return matchedOption?.recommendedSpecialty || "";
+}
+
 function getAuthToken() {
   return getToken();
 }
@@ -410,12 +423,16 @@ function ScanConfigurator({
   );
 }
 
-function ScanResultsModal({ scan, onClose }) {
+function ScanResultsModal({ scan, scanOptions = [], onClose }) {
   const results = scan?.results;
   const hasStructuredResults = results && typeof results === "object";
   const imageRows = getScanImageRows(scan);
   const groupedImageRows = groupScanImageRowsByModel(imageRows);
   const [submittedImageSources, setSubmittedImageSources] = useState({});
+  const recommendedSpecialty = resolveRecommendedSpecialty(scan, scanOptions);
+  const bookAppointmentUrl = recommendedSpecialty
+    ? `/appointments?create=true&specialty=${encodeURIComponent(recommendedSpecialty)}`
+    : "/appointments?create=true";
 
   useEffect(() => {
     const submittedImages = Array.isArray(scan?.images) ? scan.images : [];
@@ -621,6 +638,19 @@ function ScanResultsModal({ scan, onClose }) {
               {results.details}
             </div>
           )}
+
+          <div className="bg-primary/10 border-primary/20 rounded-box flex flex-col gap-3 border p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-semibold">Book a follow-up appointment</p>
+              <p className="text-base-content/70 text-sm">
+                Use the scan result to prefill the most relevant specialty.
+              </p>
+            </div>
+            <Link className="btn btn-primary" to={bookAppointmentUrl}>
+              <FaPlus />
+              Book appointment
+            </Link>
+          </div>
 
           {groupedImageRows.length > 0 ? (
             <div className="flex flex-col gap-4">
@@ -1067,7 +1097,11 @@ export default function AiScan() {
         />
         <Sidebar scans={scans} />
       </div>
-      <ScanResultsModal scan={selectedScan} onClose={handleCloseResults} />
+      <ScanResultsModal
+        scan={selectedScan}
+        scanOptions={scanOptions}
+        onClose={handleCloseResults}
+      />
       <CreateScan
         onScanCreated={fetchScans}
         scanOptions={scanOptions}
