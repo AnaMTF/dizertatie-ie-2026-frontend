@@ -443,6 +443,10 @@ function ScanResultsModal({ scan, scanOptions = [], onClose }) {
     createAppointmentParams.set("clinic", favoriteClinicUuid);
   }
 
+  if (scan?.uuid) {
+    createAppointmentParams.set("scanUuid", scan.uuid);
+  }
+
   const createAppointmentUrl = `/appointments?${createAppointmentParams.toString()}`;
 
   useEffect(() => {

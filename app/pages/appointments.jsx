@@ -588,19 +588,22 @@ export default function Appointments() {
 
     const specialty = searchParams.get("specialty")?.trim() || "";
     const clinicUuid = searchParams.get("clinic")?.trim() || "";
+    const scanUuid = searchParams.get("scanUuid")?.trim() || "";
     const draft = {
       seed: Date.now(),
       ...(specialty ? { specialty } : {}),
       ...(clinicUuid ? { clinicUuid } : {}),
+      ...(scanUuid ? { scanUuid } : {}),
     };
 
-    openCreateModal(specialty || clinicUuid ? draft : null);
+    openCreateModal(specialty || clinicUuid || scanUuid ? draft : null);
 
     setSearchParams((previous) => {
       const next = Object.fromEntries(previous);
       delete next.create;
       delete next.specialty;
       delete next.clinic;
+      delete next.scanUuid;
       return next;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps

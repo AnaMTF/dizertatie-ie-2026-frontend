@@ -62,6 +62,7 @@ function createEmptyForm() {
     specialty: "",
     doctorUuid: "",
     clinicUuid: "",
+    scanUuid: "",
     date: null,
     time: "",
     note: "",
@@ -81,6 +82,7 @@ function buildFormFromDraft(draft) {
   next.specialty = draft.specialty || "";
   next.doctorUuid = draft.doctorUuid || "";
   next.clinicUuid = draft.clinicUuid || favoriteClinicUuid;
+  next.scanUuid = draft.scanUuid || "";
   next.date = draft.date ? parseDateKey(draft.date) : null;
 
   return next;
@@ -485,6 +487,27 @@ function StepNotes({
         value={values.note}
         onChange={onChange}
       />
+
+      {values.scanUuid && (
+        <div className="alert alert-info">
+          <span>Images attached from AI scan.</span>
+          <button
+            type="button"
+            className="btn btn-xs btn-outline"
+            onClick={() =>
+              onChange({
+                target: {
+                  name: "scanUuid",
+                  value: "",
+                },
+              })
+            }
+          >
+            Remove
+          </button>
+        </div>
+      )}
+
       <div className="flex flex-col gap-2">
         <label className="flex items-center gap-2 text-sm font-semibold">
           <FaFileMedical /> Attach documents
@@ -711,6 +734,7 @@ function CreateAppointmentForm({ onCreated, initialDraft }) {
           doctorUuid: form.doctorUuid,
           clinicUuid: form.clinicUuid,
           notes: form.note || undefined,
+          scanUuid: form.scanUuid || undefined,
         }),
       });
 
