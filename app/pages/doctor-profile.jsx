@@ -54,6 +54,7 @@ function StatusBadge({ status }) {
 
 function UpcomingAppointmentsDoctor({ specialization }) {
   const [appointments, setAppointments] = useState([]);
+  const [totalUpcomingAppointments, setTotalUpcomingAppointments] = useState(0);
   const [clinicName, setClinicName] = useState({});
 
   useEffect(() => {
@@ -83,10 +84,10 @@ function UpcomingAppointmentsDoctor({ specialization }) {
             (a, b) =>
               toAppointmentDateTime(a).getTime() -
               toAppointmentDateTime(b).getTime(),
-          )
-          .slice(0, 8);
+          );
 
-        setAppointments(upcoming);
+        setTotalUpcomingAppointments(upcoming.length);
+        setAppointments(upcoming.slice(0, 8));
 
         // Fetch clinic names for appointments
         const clinicNameMap = {};
@@ -127,9 +128,9 @@ function UpcomingAppointmentsDoctor({ specialization }) {
           <h2 className="text-base-content/40 text-xs font-semibold tracking-widest uppercase">
             Upcoming appointments
           </h2>
-          {appointments.length > 0 && (
+          {totalUpcomingAppointments > 0 && (
             <span className="badge badge-neutral badge-sm">
-              {appointments.length}
+              {totalUpcomingAppointments}
             </span>
           )}
         </div>
@@ -210,12 +211,14 @@ function UpcomingAppointmentsDoctor({ specialization }) {
 
 function FavoritePostsWidget() {
   const [items, setItems] = useState([]);
+  const [totalFavorites, setTotalFavorites] = useState(0);
   const [error, setError] = useState(null);
   const canFavorite = canManageFavorites();
 
   useEffect(() => {
     if (!canFavorite) {
       setItems([]);
+      setTotalFavorites(0);
       setError(null);
       return;
     }
@@ -229,8 +232,11 @@ function FavoritePostsWidget() {
 
       if (result.error) {
         setError(result.error);
+        setTotalFavorites(0);
         return;
       }
+
+      setTotalFavorites(result.pagination?.totalItems ?? result.data.length);
 
       setItems(
         result.data
@@ -262,8 +268,8 @@ function FavoritePostsWidget() {
           <h2 className="text-base-content/40 text-xs font-semibold tracking-widest uppercase">
             Favorite articles
           </h2>
-          {items.length > 0 && (
-            <span className="badge badge-neutral badge-sm">{items.length}</span>
+          {totalFavorites > 0 && (
+            <span className="badge badge-neutral badge-sm">{totalFavorites}</span>
           )}
         </div>
 
