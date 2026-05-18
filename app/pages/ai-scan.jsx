@@ -430,9 +430,20 @@ function ScanResultsModal({ scan, scanOptions = [], onClose }) {
   const groupedImageRows = groupScanImageRowsByModel(imageRows);
   const [submittedImageSources, setSubmittedImageSources] = useState({});
   const recommendedSpecialty = resolveRecommendedSpecialty(scan, scanOptions);
-  const bookAppointmentUrl = recommendedSpecialty
-    ? `/appointments?create=true&specialty=${encodeURIComponent(recommendedSpecialty)}`
-    : "/appointments?create=true";
+  const favoriteClinicUuid = getUser()?.favoriteClinicUuid || "";
+  const createAppointmentParams = new URLSearchParams({
+    create: "true",
+  });
+
+  if (recommendedSpecialty) {
+    createAppointmentParams.set("specialty", recommendedSpecialty);
+  }
+
+  if (favoriteClinicUuid) {
+    createAppointmentParams.set("clinic", favoriteClinicUuid);
+  }
+
+  const createAppointmentUrl = `/appointments?${createAppointmentParams.toString()}`;
 
   useEffect(() => {
     const submittedImages = Array.isArray(scan?.images) ? scan.images : [];
@@ -646,9 +657,9 @@ function ScanResultsModal({ scan, scanOptions = [], onClose }) {
                 Use the scan result to prefill the most relevant specialty.
               </p>
             </div>
-            <Link className="btn btn-primary" to={bookAppointmentUrl}>
+            <Link className="btn btn-primary" to={createAppointmentUrl}>
               <FaPlus />
-              Book appointment
+              Create appointment
             </Link>
           </div>
 
