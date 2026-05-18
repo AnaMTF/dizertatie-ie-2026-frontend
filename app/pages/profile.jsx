@@ -173,10 +173,7 @@ function RecentScans() {
           </div>
         )}
 
-        <Link
-          to="/ai-scan"
-          className="btn btn-ghost btn-sm mt-2 justify-start px-0"
-        >
+        <Link to="/ai-scan" className="btn btn-ghost btn-sm mt-2 justify-start">
           View all scans →
         </Link>
       </div>
@@ -301,7 +298,7 @@ function UpcomingAppointments() {
 
         <Link
           to="/appointments"
-          className="btn btn-ghost btn-sm mt-2 justify-start px-0"
+          className="btn btn-ghost btn-sm mt-2 justify-start"
         >
           View all appointments →
         </Link>
@@ -370,7 +367,9 @@ function FavoritePostsWidget() {
             Favorite articles
           </h2>
           {totalFavorites > 0 && (
-            <span className="badge badge-neutral badge-sm">{totalFavorites}</span>
+            <span className="badge badge-neutral badge-sm">
+              {totalFavorites}
+            </span>
           )}
         </div>
 
@@ -394,7 +393,7 @@ function FavoritePostsWidget() {
 
         <Link
           to="/blog?favorites=1"
-          className="btn btn-ghost btn-sm mt-2 justify-start px-0"
+          className="btn btn-ghost btn-sm mt-2 justify-start"
         >
           View all favorites →
         </Link>
