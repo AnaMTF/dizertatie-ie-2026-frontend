@@ -11,6 +11,7 @@ import { Navbar } from "./components/navigation/navbar";
 import { AUTH_CHANGED_EVENT, getUser } from "./utils/auth";
 import { NOTIFICATIONS_UNREAD_CHANGED_EVENT } from "./utils/notifications";
 import { enablePushNotifications } from "./utils/push";
+import { THEME_CHANGED_EVENT, getActiveTheme } from "./utils/theme";
 
 import "./app.css";
 
@@ -19,8 +20,21 @@ export function clientLoader() {
 }
 
 export function Layout({ children }) {
+  const [theme, setTheme] = useState(() => getActiveTheme());
+
+  useEffect(() => {
+    function handleThemeChanged() {
+      setTheme(getActiveTheme());
+    }
+
+    window.addEventListener(THEME_CHANGED_EVENT, handleThemeChanged);
+    return () => {
+      window.removeEventListener(THEME_CHANGED_EVENT, handleThemeChanged);
+    };
+  }, []);
+
   return (
-    <html lang="en">
+    <html lang="en" data-theme={theme}>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />

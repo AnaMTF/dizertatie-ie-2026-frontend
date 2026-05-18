@@ -3,11 +3,13 @@ import {
   FaBell,
   FaCalendarAlt,
   FaMedkit,
+  FaMoon,
   FaNewspaper,
   FaSearch,
   FaSignInAlt,
   FaSignOutAlt,
   FaStethoscope,
+  FaSun,
   FaUserCircle,
   FaUserPlus,
 } from "react-icons/fa";
@@ -16,9 +18,48 @@ import {
   NOTIFICATIONS_UNREAD_CHANGED_EVENT,
   getUnreadNotificationCount,
 } from "../../utils/notifications";
+import {
+  THEME_CHANGED_EVENT,
+  getActiveTheme,
+  toggleTheme,
+} from "../../utils/theme";
 import Login from "../authentication/login";
 import Logout from "../authentication/logout";
 import Register from "../authentication/register";
+
+function ThemeToggle() {
+  const [theme, setTheme] = useState(() => getActiveTheme());
+
+  useEffect(() => {
+    function handleThemeChanged() {
+      setTheme(getActiveTheme());
+    }
+
+    window.addEventListener(THEME_CHANGED_EVENT, handleThemeChanged);
+    return () => {
+      window.removeEventListener(THEME_CHANGED_EVENT, handleThemeChanged);
+    };
+  }, []);
+
+  function handleThemeToggle() {
+    const nextTheme = toggleTheme();
+    setTheme(nextTheme);
+  }
+
+  return (
+    <label className="label cursor-pointer gap-2 py-0">
+      <FaSun className="text-sm" />
+      <input
+        type="checkbox"
+        className="toggle toggle-sm"
+        checked={theme === "dark"}
+        onChange={handleThemeToggle}
+        aria-label="Toggle light and dark mode"
+      />
+      <FaMoon className="text-sm" />
+    </label>
+  );
+}
 
 function PatientActions() {
   const [unreadCount, setUnreadCount] = useState(0);
@@ -232,6 +273,7 @@ export function Navbar({ user = null }) {
         </button>
       </div>
       <div className="navbar-end gap-4">
+        <ThemeToggle />
         {isLoggedIn ? <LoggedInActions user={user} /> : <LoggedOutActions />}
       </div>
     </div>
