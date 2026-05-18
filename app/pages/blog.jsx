@@ -1,7 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FaHeart } from "react-icons/fa";
 import { Link, useSearchParams } from "react-router";
 import { posts } from "../posts/index.js";
 import { API_BASE } from "../utils/auth.js";
+import {
+  addFavoritePost,
+  canManageFavorites,
+  getFavoritePosts,
+  removeFavoritePost,
+} from "../utils/blog-favorites.js";
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 10;
@@ -19,6 +26,7 @@ function toPositiveInt(value, fallback) {
 export default function Blog() {
   const [searchParams, setSearchParams] = useSearchParams();
   const query = searchParams.get("q")?.trim() ?? "";
+  const favoritesOnly = searchParams.get("favorites") === "1";
   const page = toPositiveInt(searchParams.get("page"), DEFAULT_PAGE);
   const limit = toPositiveInt(searchParams.get("limit"), DEFAULT_LIMIT);
 
@@ -31,7 +39,12 @@ export default function Blog() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [favoriteSlugs, setFavoriteSlugs] = useState(() => new Set());
+  const [favoritesLoading, setFavoritesLoading] = useState(false);
+  const [favoriteError, setFavoriteError] = useState(null);
+  const [pendingFavoriteSlug, setPendingFavoriteSlug] = useState(null);
   const previousQueryRef = useRef(query);
+  const canFavorite = canManageFavorites();
 
   const setPaginationParams = useCallback(
     (updates) => {
@@ -63,6 +76,42 @@ export default function Blog() {
       }
     }
   }, [limit, page, query, setPaginationParams]);
+
+  useEffect(() => {
+    if (!canFavorite) {
+      setFavoriteSlugs(new Set());
+      setFavoritesLoading(false);
+      setFavoriteError(null);
+      return;
+    }
+
+    let isMounted = true;
+    setFavoritesLoading(true);
+    setFavoriteError(null);
+
+    getFavoritePosts({ page: 1, limit: 50 })
+      .then((result) => {
+        if (!isMounted) {
+          return;
+        }
+
+        if (result.error) {
+          setFavoriteError(result.error);
+          return;
+        }
+
+        setFavoriteSlugs(new Set(result.data.map((item) => item.postSlug)));
+      })
+      .finally(() => {
+        if (isMounted) {
+          setFavoritesLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [canFavorite]);
 
   useEffect(() => {
     if (!query) {
@@ -114,8 +163,16 @@ export default function Blog() {
     return () => controller.abort();
   }, [limit, page, query]);
 
+  const sourcePosts = useMemo(() => {
+    if (favoritesOnly) {
+      return posts.filter((post) => favoriteSlugs.has(post.meta.slug));
+    }
+
+    return posts;
+  }, [favoriteSlugs, favoritesOnly]);
+
   const staticPagination = useMemo(() => {
-    const totalItems = posts.length;
+    const totalItems = sourcePosts.length;
     const totalPages = Math.max(1, Math.ceil(totalItems / limit));
     const activePage = Math.min(Math.max(DEFAULT_PAGE, page), totalPages);
 
@@ -125,7 +182,7 @@ export default function Blog() {
       totalItems,
       totalPages,
     };
-  }, [limit, page]);
+  }, [limit, page, sourcePosts.length]);
 
   const activePagination = query
     ? {
@@ -154,10 +211,74 @@ export default function Blog() {
     const start = (staticPagination.page - 1) * staticPagination.limit;
     const end = start + staticPagination.limit;
 
-    return posts.slice(start, end);
-  }, [staticPagination.limit, staticPagination.page]);
+    return sourcePosts.slice(start, end);
+  }, [sourcePosts, staticPagination.limit, staticPagination.page]);
 
   const visiblePosts = query ? displayPosts : defaultPosts;
+
+  const favoritesLabel = useMemo(() => {
+    if (!favoritesOnly) {
+      return null;
+    }
+
+    if (!canFavorite) {
+      return "Login required to view favorite posts.";
+    }
+
+    if (favoritesLoading) {
+      return "Loading favorite posts...";
+    }
+
+    if (favoriteError) {
+      return favoriteError;
+    }
+
+    return "Your saved favorite posts";
+  }, [canFavorite, favoriteError, favoritesLoading, favoritesOnly]);
+
+  async function handleToggleFavorite(slug) {
+    if (!canFavorite || pendingFavoriteSlug) {
+      return;
+    }
+
+    const currentlyFavorited = favoriteSlugs.has(slug);
+
+    setPendingFavoriteSlug(slug);
+    setFavoriteError(null);
+
+    setFavoriteSlugs((current) => {
+      const next = new Set(current);
+
+      if (currentlyFavorited) {
+        next.delete(slug);
+      } else {
+        next.add(slug);
+      }
+
+      return next;
+    });
+
+    const result = currentlyFavorited
+      ? await removeFavoritePost(slug)
+      : await addFavoritePost(slug);
+
+    if (result.error) {
+      setFavoriteError(result.error);
+      setFavoriteSlugs((current) => {
+        const next = new Set(current);
+
+        if (currentlyFavorited) {
+          next.add(slug);
+        } else {
+          next.delete(slug);
+        }
+
+        return next;
+      });
+    }
+
+    setPendingFavoriteSlug(null);
+  }
 
   function handlePreviousPage() {
     setPaginationParams({
@@ -238,7 +359,13 @@ export default function Blog() {
             </p>
           )}
 
-          {!query && <p className="text-base-content/60">Latest posts</p>}
+          {!query && (
+            <p className="text-base-content/60">
+              {favoritesOnly
+                ? favoritesLabel || "Favorite posts"
+                : "Latest posts"}
+            </p>
+          )}
         </div>
 
         {!loading && visiblePosts.length === 0 && (
@@ -249,13 +376,34 @@ export default function Blog() {
 
         <div className="flex flex-col gap-6">
           {visiblePosts.map((post) => (
-            <Link
+            <div
               key={post.meta.slug}
-              to={`/blog/${post.meta.slug}`}
               className="card bg-base-200 hover:bg-base-300 transition-colors"
             >
               <div className="card-body">
-                <h2 className="card-title">{post.meta.title}</h2>
+                <div className="flex items-start justify-between gap-3">
+                  <Link
+                    to={`/blog/${post.meta.slug}`}
+                    className="card-title link-hover link"
+                  >
+                    {post.meta.title}
+                  </Link>
+                  {canFavorite && (
+                    <button
+                      type="button"
+                      className={`btn btn-ghost btn-sm btn-circle ${favoriteSlugs.has(post.meta.slug) ? "text-error" : "text-base-content/60"}`}
+                      onClick={() => handleToggleFavorite(post.meta.slug)}
+                      disabled={pendingFavoriteSlug === post.meta.slug}
+                      title={
+                        favoriteSlugs.has(post.meta.slug)
+                          ? "Remove from favorites"
+                          : "Add to favorites"
+                      }
+                    >
+                      <FaHeart />
+                    </button>
+                  )}
+                </div>
                 <p className="text-base-content/70">{post.meta.summary}</p>
                 <p className="text-base-content/50 mt-1 text-sm">
                   {new Date(post.meta.publishedAt).toLocaleDateString("en-GB", {
@@ -265,7 +413,7 @@ export default function Blog() {
                   })}
                 </p>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
 

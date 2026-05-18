@@ -1,6 +1,13 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { FaHeart } from "react-icons/fa";
 import { Link, useParams } from "react-router";
 import { postsBySlug } from "../posts/index.js";
+import {
+  addFavoritePost,
+  canManageFavorites,
+  getFavoritePosts,
+  removeFavoritePost,
+} from "../utils/blog-favorites.js";
 
 const SPECIALTY_LABELS = {
   general: "General Medicine",
@@ -51,6 +58,10 @@ function BlogPostAppointmentCta({ relatedSpecialties }) {
 export default function BlogPost() {
   const { slug } = useParams();
   const post = postsBySlug[slug];
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [favoriteLoading, setFavoriteLoading] = useState(false);
+  const [favoriteError, setFavoriteError] = useState(null);
+  const canFavorite = canManageFavorites();
 
   useEffect(() => {
     const scrollContainer = document.querySelector("main");
@@ -62,6 +73,64 @@ export default function BlogPost() {
 
     window.scrollTo({ top: 0 });
   }, [slug]);
+
+  useEffect(() => {
+    if (!canFavorite || !slug) {
+      setIsFavorited(false);
+      setFavoriteError(null);
+      setFavoriteLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+    setFavoriteLoading(true);
+    setFavoriteError(null);
+
+    getFavoritePosts({ page: 1, limit: 1, slug })
+      .then((result) => {
+        if (!isMounted) {
+          return;
+        }
+
+        if (result.error) {
+          setFavoriteError(result.error);
+          return;
+        }
+
+        setIsFavorited(result.data.length > 0);
+      })
+      .finally(() => {
+        if (isMounted) {
+          setFavoriteLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [canFavorite, slug]);
+
+  async function handleToggleFavorite() {
+    if (!canFavorite || !slug || favoriteLoading) {
+      return;
+    }
+
+    const currentlyFavorited = isFavorited;
+    setFavoriteLoading(true);
+    setFavoriteError(null);
+    setIsFavorited(!currentlyFavorited);
+
+    const result = currentlyFavorited
+      ? await removeFavoritePost(slug)
+      : await addFavoritePost(slug);
+
+    if (result.error) {
+      setIsFavorited(currentlyFavorited);
+      setFavoriteError(result.error);
+    }
+
+    setFavoriteLoading(false);
+  }
 
   if (!post) {
     return (
@@ -84,9 +153,23 @@ export default function BlogPost() {
     <div className="px-9 pt-6 pb-10">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
         <div>
-          <Link to="/blog" className="link link-primary mb-6 block text-sm">
-            ← Back to Blog
-          </Link>
+          <div className="mb-6 flex items-center justify-between gap-3">
+            <Link to="/blog" className="link link-primary block text-sm">
+              ← Back to Blog
+            </Link>
+
+            {canFavorite && (
+              <button
+                type="button"
+                className={`btn btn-sm ${isFavorited ? "btn-error" : "btn-outline"}`}
+                onClick={handleToggleFavorite}
+                disabled={favoriteLoading}
+              >
+                <FaHeart />
+                {isFavorited ? "Favorited" : "Add to favorites"}
+              </button>
+            )}
+          </div>
 
           <h1 className="mb-2 text-4xl font-bold">{post.meta.title}</h1>
           <p className="text-base-content/50 text-sm">
@@ -96,6 +179,9 @@ export default function BlogPost() {
               day: "numeric",
             })}
           </p>
+          {favoriteError && (
+            <p className="text-error mt-2 text-sm">{favoriteError}</p>
+          )}
         </div>
 
         <div className="prose max-w-none">
