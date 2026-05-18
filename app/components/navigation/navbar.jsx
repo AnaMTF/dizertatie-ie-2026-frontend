@@ -251,28 +251,30 @@ export function Navbar({ user = null }) {
   }
 
   return (
-    <div className="navbar bg-neutral text-neutral-content px-9">
-      <div className="navbar-start gap-2">
+    <div className="navbar bg-neutral text-neutral-content gap-4 px-9">
+      <div className="navbar-start w-auto flex-none gap-2">
         <Link to="/" className="flex items-center gap-2">
           <FaMedkit className="text-3xl" />
           <div className="text-2xl font-semibold">Medvision</div>
         </Link>
       </div>
-      <div className="navbar-center flex gap-2">
-        <input
-          type="text"
-          placeholder="Search..."
-          className="input input-accent input-sm bg-base-200 text-base-content placeholder-base-content/50 w-xl"
-          value={searchValue}
-          onChange={(event) => setSearchValue(event.target.value)}
-          onKeyDown={handleSearchKeyDown}
-        />
-        <button onClick={handleSearch} className="btn btn-sm btn-accent">
-          <FaSearch />
-          Search
-        </button>
+      <div className="navbar-center flex flex-1 justify-center px-2">
+        <div className="flex w-full max-w-xl items-center gap-2">
+          <input
+            type="text"
+            placeholder="Search..."
+            className="input input-accent input-sm bg-base-200 text-base-content placeholder-base-content/50 min-w-0 flex-1"
+            value={searchValue}
+            onChange={(event) => setSearchValue(event.target.value)}
+            onKeyDown={handleSearchKeyDown}
+          />
+          <button onClick={handleSearch} className="btn btn-sm btn-accent">
+            <FaSearch />
+            Search
+          </button>
+        </div>
       </div>
-      <div className="navbar-end gap-4">
+      <div className="navbar-end w-auto flex-none gap-4">
         <ThemeToggle />
         {isLoggedIn ? <LoggedInActions user={user} /> : <LoggedOutActions />}
       </div>
