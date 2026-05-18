@@ -356,14 +356,7 @@ export default function DoctorNotificationsPage() {
                   <li key={notification.uuid} className="p-4">
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div className="min-w-0 flex-1">
-                        <div className="mb-1 flex items-center gap-2">
-                          <p className="font-semibold">{notification.title}</p>
-                          {!notification.readAt && (
-                            <span className="badge badge-info badge-xs">
-                              Unread
-                            </span>
-                          )}
-                        </div>
+                        <p className="mb-1 font-semibold">{notification.title}</p>
                         <p className="text-base-content/70 text-sm">
                           {notification.body}
                         </p>
@@ -372,7 +365,12 @@ export default function DoctorNotificationsPage() {
                         </p>
                       </div>
 
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 self-start sm:self-center">
+                        {!notification.readAt && (
+                          <span className="badge badge-info badge-sm h-8 px-3">
+                            Unread
+                          </span>
+                        )}
                         <button
                           type="button"
                           className="btn btn-sm btn-ghost"
