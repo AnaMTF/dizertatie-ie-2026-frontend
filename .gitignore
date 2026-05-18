@@ -5,7 +5,3 @@
 # React Router
 /.react-router/
 /build/
-
-# Photo assets
-/public/*.jpg
-public.zip
