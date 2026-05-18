@@ -9,7 +9,7 @@ import {
   FaTrash,
   FaUserMd,
 } from "react-icons/fa";
-import { API_BASE, getToken } from "../../utils/auth";
+import { API_BASE, getToken, getUser } from "../../utils/auth";
 import StepActions from "../common/step-actions";
 
 const SPECIALTIES = [
@@ -71,14 +71,16 @@ function createEmptyForm() {
 
 function buildFormFromDraft(draft) {
   const next = createEmptyForm();
+  const favoriteClinicUuid = getUser()?.favoriteClinicUuid || "";
 
   if (!draft) {
+    next.clinicUuid = favoriteClinicUuid;
     return next;
   }
 
   next.specialty = draft.specialty || "";
   next.doctorUuid = draft.doctorUuid || "";
-  next.clinicUuid = draft.clinicUuid || "";
+  next.clinicUuid = draft.clinicUuid || favoriteClinicUuid;
   next.date = draft.date ? parseDateKey(draft.date) : null;
 
   return next;
@@ -165,6 +167,44 @@ function StepDateTime({
 
     return clinics.filter((clinic) => clinicUuidSet.has(clinic.uuid));
   }, [clinics, doctors, values.specialty]);
+
+  const preferredClinicUuid = displayedClinics.some(
+    (clinic) => clinic.uuid === values.clinicUuid,
+  )
+    ? values.clinicUuid
+    : displayedClinics[0]?.uuid || "";
+
+  useEffect(() => {
+    if (!values.specialty) {
+      return;
+    }
+
+    if (!displayedClinics.length) {
+      if (values.clinicUuid) {
+        onChange({ target: { name: "clinicUuid", value: "" } });
+        onChange({ target: { name: "doctorUuid", value: "" } });
+        onChange({ target: { name: "date", value: null } });
+        onChange({ target: { name: "time", value: "" } });
+      }
+
+      return;
+    }
+
+    if (preferredClinicUuid === values.clinicUuid) {
+      return;
+    }
+
+    onChange({ target: { name: "clinicUuid", value: preferredClinicUuid } });
+    onChange({ target: { name: "doctorUuid", value: "" } });
+    onChange({ target: { name: "date", value: null } });
+    onChange({ target: { name: "time", value: "" } });
+  }, [
+    displayedClinics,
+    onChange,
+    preferredClinicUuid,
+    values.clinicUuid,
+    values.specialty,
+  ]);
 
   function handleDoctorChange(event) {
     const doctorUuid = event.target.value;
@@ -309,7 +349,7 @@ function StepDateTime({
           <select
             className="select select-sm w-full"
             name="clinicUuid"
-            value={values.clinicUuid}
+            value={preferredClinicUuid}
             onChange={handleClinicChange}
           >
             <option value="">Any clinic</option>

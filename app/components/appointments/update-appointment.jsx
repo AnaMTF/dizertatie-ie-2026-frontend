@@ -59,6 +59,10 @@ export default function UpdateAppointmentModal({ appointment, onUpdated }) {
       setSubmitting(true);
       setError("");
 
+      const hasScheduleChange =
+        date !== (appointment.date || "") ||
+        timeSlot !== (appointment.timeSlot || "");
+
       const response = await fetch(
         `${API_BASE}/appointment/${appointment.uuid}`,
         {
@@ -70,7 +74,7 @@ export default function UpdateAppointmentModal({ appointment, onUpdated }) {
           body: JSON.stringify({
             date,
             timeSlot,
-            status: "rescheduled",
+            ...(hasScheduleChange ? { status: "rescheduled" } : {}),
             notes: notes || undefined,
           }),
         },
