@@ -83,11 +83,51 @@ function PatientActions() {
 }
 
 function DoctorActions() {
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const refreshUnreadCount = useCallback(async () => {
+    try {
+      const count = await getUnreadNotificationCount();
+      setUnreadCount(count);
+    } catch {
+      // swallow; badge simply stays at last known value
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshUnreadCount();
+
+    window.addEventListener(
+      NOTIFICATIONS_UNREAD_CHANGED_EVENT,
+      refreshUnreadCount,
+    );
+
+    return () => {
+      window.removeEventListener(
+        NOTIFICATIONS_UNREAD_CHANGED_EVENT,
+        refreshUnreadCount,
+      );
+    };
+  }, [refreshUnreadCount]);
+
   return (
     <>
       <Link to="/doctor/appointments" className="btn btn-sm btn-primary">
         <FaStethoscope />
         My Appointments
+      </Link>
+
+      <Link
+        to="/doctor/notifications"
+        className="indicator btn btn-sm btn-ghost"
+      >
+        <FaBell />
+        Notifications
+        {unreadCount > 0 && (
+          <span className="badge badge-info badge-xs indicator-item">
+            {unreadCount > 99 ? "99+" : unreadCount}
+          </span>
+        )}
       </Link>
 
       <Link to="/blog" className="btn btn-sm btn-ghost">
