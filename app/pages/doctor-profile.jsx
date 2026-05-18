@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FaCalendarCheck, FaExclamationCircle } from "react-icons/fa";
+import { FaCalendarCheck, FaExclamationCircle, FaSearch } from "react-icons/fa";
 import { Link, redirect, useLoaderData } from "react-router";
 import { postsBySlug } from "../posts/index.js";
 import { API_BASE, getToken, getUser } from "../utils/auth";
@@ -366,20 +366,29 @@ export default function DoctorProfile() {
                   Jump to the tools you use most often.
                 </p>
 
-                <Link
-                  to="/doctor/appointments"
-                  className="btn btn-primary w-full"
-                >
-                  <FaCalendarCheck />
-                  Manage Appointments
-                </Link>
-                <Link
-                  to="/doctor/appointments?status=actionRequired"
-                  className="btn btn-warning w-full"
-                >
-                  <FaExclamationCircle />
-                  Action Required
-                </Link>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+                  <Link
+                    to="/doctor/appointments"
+                    className="btn btn-primary w-full"
+                  >
+                    <FaCalendarCheck />
+                    Appointments
+                  </Link>
+                  <Link
+                    to="/doctor/appointments?status=actionRequired"
+                    className="btn btn-warning w-full"
+                  >
+                    <FaExclamationCircle />
+                    Action Required
+                  </Link>
+                  <Link
+                    to="/doctor/scan-review-queue"
+                    className="btn btn-accent w-full"
+                  >
+                    <FaSearch />
+                    Review Scan Queue
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
