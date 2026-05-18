@@ -158,6 +158,11 @@ function DoctorActions() {
         My Appointments
       </Link>
 
+      <Link to="/doctor/scan-review-queue" className="btn btn-sm btn-ghost">
+        <FaSearch />
+        Scan Queue
+      </Link>
+
       <Link
         to="/doctor/notifications"
         className="indicator btn btn-sm btn-ghost"

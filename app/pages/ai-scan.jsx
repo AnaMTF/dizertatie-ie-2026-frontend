@@ -310,6 +310,18 @@ function StatusBadge({ status }) {
   return <span className={`badge ${cls}`}>{label}</span>;
 }
 
+function VerificationBadge({ verdict, verified }) {
+  if (verdict === "accurate" && verified) {
+    return <span className="badge badge-success">Accurate</span>;
+  }
+
+  if (verdict === "inaccurate") {
+    return <span className="badge badge-error">Inaccurate</span>;
+  }
+
+  return <span className="badge badge-warning">Pending review</span>;
+}
+
 function TopBar() {
   return (
     <div>
@@ -569,7 +581,24 @@ function ScanResultsModal({ scan, scanOptions = [], onClose }) {
                 {formatProcessedAt(results?.processedAt)}
               </p>
             </div>
+            <div className="bg-base-200 rounded-box p-3">
+              <p className="text-base-content/50 text-xs uppercase">Verified</p>
+              <p className="mt-1">
+                <VerificationBadge
+                  verdict={scan?.verificationVerdict}
+                  verified={scan?.verified}
+                />
+              </p>
+            </div>
           </div>
+
+          {scan?.verifiedByDoctor && (
+            <div className="bg-base-200 rounded-box p-3 text-sm">
+              Reviewed by Dr. {scan.verifiedByDoctor.firstName}{" "}
+              {scan.verifiedByDoctor.lastName} on{" "}
+              {formatProcessedAt(scan.verifiedAt)}
+            </div>
+          )}
 
           {hasStructuredResults && (
             <div className="grid gap-3 sm:grid-cols-3">
@@ -813,27 +842,28 @@ function ScansTable({ scans, loading, error, onRefresh, onOpenResults }) {
               <th>Body part</th>
               <th>Image type</th>
               <th>Status</th>
+              <th>Verified</th>
               <th>Results</th>
             </tr>
           </thead>
           <tbody>
             {!loading && error && (
               <tr>
-                <td colSpan={6} className="text-error px-4 py-6 text-center">
+                <td colSpan={7} className="text-error px-4 py-6 text-center">
                   {error}
                 </td>
               </tr>
             )}
             {loading && (
               <tr>
-                <td colSpan={6} className="text-base-content/40 text-center">
+                <td colSpan={7} className="text-base-content/40 text-center">
                   Loading…
                 </td>
               </tr>
             )}
             {!loading && !error && scans.length === 0 && (
               <tr>
-                <td colSpan={6} className="text-base-content/40 text-center">
+                <td colSpan={7} className="text-base-content/40 text-center">
                   No scans yet. Click &ldquo;New Scan&rdquo; to get started.
                 </td>
               </tr>
@@ -870,6 +900,12 @@ function ScansTable({ scans, loading, error, onRefresh, onOpenResults }) {
                   </td>
                   <td>
                     <StatusBadge status={scan.status} />
+                  </td>
+                  <td>
+                    <VerificationBadge
+                      verdict={scan.verificationVerdict}
+                      verified={scan.verified}
+                    />
                   </td>
                   <td className="max-w-xs">
                     {scan.results &&
