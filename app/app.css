@@ -5,3 +5,61 @@
     light --default,
     dark --prefersdark;
 }
+
+@plugin "daisyui/theme" {
+  name: "medvision";
+  default: true;
+  prefersdark: false;
+  color-scheme: light;
+
+  --color-primary: #4f46e5;
+  --color-primary-content: #ffffff;
+
+  --color-secondary: #7c3aed;
+  --color-secondary-content: #ffffff;
+
+  --color-accent: #06b6d4;
+  --color-accent-content: #ffffff;
+
+  --color-neutral: #1e293b;
+  --color-neutral-content: #f8fafc;
+
+  --color-base-100: #f8fafc;
+  --color-base-200: #eef2ff;
+  --color-base-300: #cbd5e1;
+  --color-base-content: #0f172a;
+
+  --color-info: #0ea5e9;
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-error: #ef4444;
+}
+
+@plugin "daisyui/theme" {
+  name: "medvisionDark";
+  default: false;
+  prefersdark: true;
+  color-scheme: dark;
+
+  --color-primary: #8b5cf6;
+  --color-primary-content: #ffffff;
+
+  --color-secondary: #6366f1;
+  --color-secondary-content: #ffffff;
+
+  --color-accent: #22d3ee;
+  --color-accent-content: #06202a;
+
+  --color-neutral: #0f172a;
+  --color-neutral-content: #e2e8f0;
+
+  --color-base-100: #020617;
+  --color-base-200: #0f172a;
+  --color-base-300: #1e293b;
+  --color-base-content: #e5e7eb;
+
+  --color-info: #38bdf8;
+  --color-success: #34d399;
+  --color-warning: #fbbf24;
+  --color-error: #f87171;
+}
