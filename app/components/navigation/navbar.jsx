@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 import {
   FaBell,
   FaCalendarAlt,
-  FaMedkit,
   FaMoon,
   FaNewspaper,
   FaSearch,
@@ -27,7 +26,7 @@ import Login from "../authentication/login";
 import Logout from "../authentication/logout";
 import Register from "../authentication/register";
 
-function ThemeToggle() {
+function useThemeMode() {
   const [theme, setTheme] = useState(() => getActiveTheme());
 
   useEffect(() => {
@@ -40,6 +39,12 @@ function ThemeToggle() {
       window.removeEventListener(THEME_CHANGED_EVENT, handleThemeChanged);
     };
   }, []);
+
+  return [theme, setTheme];
+}
+
+function ThemeToggle() {
+  const [theme, setTheme] = useThemeMode();
 
   function handleThemeToggle() {
     const nextTheme = toggleTheme();
@@ -59,6 +64,13 @@ function ThemeToggle() {
       <FaMoon className="text-sm" />
     </label>
   );
+}
+
+function BrandLogo() {
+  const [theme] = useThemeMode();
+  const logoSrc = theme === "dark" ? "/dark_logo.png" : "/light_logo.png";
+
+  return <img src={logoSrc} alt="Medvision logo" className="h-8 w-auto" />;
 }
 
 function PatientActions() {
@@ -259,7 +271,7 @@ export function Navbar({ user = null }) {
     <div className="navbar bg-neutral text-neutral-content gap-4 px-9">
       <div className="navbar-start w-auto flex-none gap-2">
         <Link to="/" className="flex items-center gap-2">
-          <FaMedkit className="text-3xl" />
+          <BrandLogo />
           <div className="text-2xl font-semibold">Medvision</div>
         </Link>
       </div>
