@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   FaExclamationTriangle,
   FaGoogle,
@@ -327,6 +327,68 @@ function StepPersonalInfo({ onNext, onBack, values, onChange }) {
   );
 }
 
+function StepClinic({
+  onNext,
+  onBack,
+  values,
+  onChange,
+  clinics,
+  loading,
+  error,
+}) {
+  const isValid = Boolean(values.favoriteClinicUuid);
+
+  return (
+    <form className="flex h-full flex-col gap-4">
+      <h2 className="flex items-center gap-2 text-2xl font-bold">
+        <FaNotesMedical /> Favorite clinic
+      </h2>
+      <p className="text-base-content/60 text-sm">
+        Select the clinic you want preselected for appointments.
+      </p>
+
+      {error && (
+        <div className="alert alert-error">
+          <FaExclamationTriangle />
+          <span>{error}</span>
+        </div>
+      )}
+
+      <label className="floating-label">
+        <select
+          name="favoriteClinicUuid"
+          className="select w-full"
+          value={values.favoriteClinicUuid}
+          onChange={onChange}
+          disabled={loading || clinics.length === 0}
+        >
+          <option value="">Select favorite clinic</option>
+          {clinics.map((clinic) => (
+            <option key={clinic.uuid} value={clinic.uuid}>
+              {clinic.name}
+            </option>
+          ))}
+        </select>
+        <span>Favorite clinic</span>
+      </label>
+
+      {loading && (
+        <div className="text-base-content/60 flex items-center gap-2 text-sm">
+          <span className="loading loading-spinner loading-sm" />
+          Loading clinics...
+        </div>
+      )}
+
+      <StepActions
+        onNext={onNext}
+        onBack={onBack}
+        disabled={!isValid || loading || clinics.length === 0}
+        tooltipMessage="Please choose a favorite clinic to continue"
+      />
+    </form>
+  );
+}
+
 function StepAdditionalInfo({
   onBack,
   values,
@@ -411,6 +473,9 @@ function StepAdditionalInfo({
 
 function RegisterForm() {
   const [step, setStep] = useState(0);
+  const [clinics, setClinics] = useState([]);
+  const [clinicsLoading, setClinicsLoading] = useState(true);
+  const [clinicsError, setClinicsError] = useState("");
   const [form, setForm] = useState({
     email: "",
     password: "",
@@ -421,6 +486,7 @@ function RegisterForm() {
     dateOfBirth: "",
     height: "",
     weight: "",
+    favoriteClinicUuid: "",
     smoker: "",
     alcoholConsumptionFrequency: "",
     additionalInfo: "",
@@ -432,6 +498,32 @@ function RegisterForm() {
   function handleChange(e) {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   }
+
+  useEffect(() => {
+    async function loadClinics() {
+      try {
+        setClinicsLoading(true);
+        setClinicsError("");
+
+        const response = await fetch(`${API_BASE}/clinic`);
+        const json = await response.json().catch(() => null);
+
+        if (!response.ok) {
+          throw new Error(
+            json?.error || `Failed to load clinics (HTTP ${response.status})`,
+          );
+        }
+
+        setClinics(json?.data ?? []);
+      } catch (error) {
+        setClinicsError(error.message || "Unable to load clinics.");
+      } finally {
+        setClinicsLoading(false);
+      }
+    }
+
+    loadClinics();
+  }, []);
 
   function nextStep() {
     setStep((s) => s + 1);
@@ -457,6 +549,7 @@ function RegisterForm() {
           dateOfBirth: form.dateOfBirth,
           height: parseFloat(form.height),
           weight: parseFloat(form.weight),
+          favoriteClinicUuid: form.favoriteClinicUuid,
           smoker: form.smoker === "yes",
           alcoholConsumptionFrequency: form.alcoholConsumptionFrequency,
           additionalMedicalInfo: form.additionalInfo,
@@ -503,6 +596,17 @@ function RegisterForm() {
         />
       )}
       {step === 3 && (
+        <StepClinic
+          onNext={nextStep}
+          onBack={prevStep}
+          values={form}
+          onChange={handleChange}
+          clinics={clinics}
+          loading={clinicsLoading}
+          error={clinicsError}
+        />
+      )}
+      {step === 4 && (
         <StepAdditionalInfo
           onBack={prevStep}
           values={form}
