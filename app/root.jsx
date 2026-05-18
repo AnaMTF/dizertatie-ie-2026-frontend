@@ -38,6 +38,11 @@ export function Layout({ children }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Medvision</title>
+        <meta
+          name="description"
+          content="Medvision is a medical platform for appointments, scans, and patient care."
+        />
         <Meta />
         <Links />
       </head>

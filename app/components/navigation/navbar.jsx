@@ -255,7 +255,7 @@ export function Navbar({ user = null }) {
       <div className="navbar-start gap-2">
         <Link to="/" className="flex items-center gap-2">
           <FaMedkit className="text-3xl" />
-          <div className="text-2xl font-semibold">Dizertatie IE 2026</div>
+          <div className="text-2xl font-semibold">Medvision</div>
         </Link>
       </div>
       <div className="navbar-center flex gap-2">
