@@ -12,8 +12,12 @@ export function getStoredTheme() {
     return null;
   }
 
-  const theme = localStorage.getItem(THEME_STORAGE_KEY);
-  return theme === "light" || theme === "dark" ? theme : null;
+  try {
+    const theme = localStorage.getItem(THEME_STORAGE_KEY);
+    return theme === "light" || theme === "dark" ? theme : null;
+  } catch {
+    return null;
+  }
 }
 
 export function resolveInitialTheme() {
@@ -46,7 +50,11 @@ export function setTheme(theme) {
     return;
   }
 
-  localStorage.setItem(THEME_STORAGE_KEY, theme);
+  try {
+    localStorage.setItem(THEME_STORAGE_KEY, theme);
+  } catch {
+    // If storage is blocked, still notify so UI can react in-memory.
+  }
   notifyThemeChanged();
 }
 

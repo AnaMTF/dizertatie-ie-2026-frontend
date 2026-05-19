@@ -43,6 +43,29 @@ export function Layout({ children }) {
           name="description"
           content="Medvision is a medical platform for appointments, scans, and patient care."
         />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function () {
+  try {
+    var stored = localStorage.getItem("theme");
+    var hasStored = stored === "light" || stored === "dark";
+    var prefersDark =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.dataset.theme = hasStored
+      ? stored
+      : prefersDark
+        ? "dark"
+        : "light";
+  } catch (error) {
+    var prefersDark =
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-color-scheme: dark)").matches;
+    document.documentElement.dataset.theme = prefersDark ? "dark" : "light";
+  }
+})();`,
+          }}
+        />
         <Meta />
         <Links />
       </head>
