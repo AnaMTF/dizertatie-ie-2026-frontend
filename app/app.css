@@ -1,15 +1,15 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 @plugin "daisyui" {
-  themes:
+  /* themes:
     light --default,
-    dark --prefersdark;
+    dark --prefersdark; */
 }
 
 @plugin "daisyui/theme" {
   name: "light";
-  default: true;
-  prefersdark: false;
+  /* default: true;
+  prefersdark: false; */
   color-scheme: "light";
   --color-base-100: #f8f7ff;
   --color-base-200: #efedff;
@@ -43,8 +43,8 @@
 
 @plugin "daisyui/theme" {
   name: "dark";
-  default: false;
-  prefersdark: true;
+  /* default: false;
+  prefersdark: true; */
   color-scheme: "dark";
   --color-base-100: #231e3e;
   --color-base-200: #1d1935;
