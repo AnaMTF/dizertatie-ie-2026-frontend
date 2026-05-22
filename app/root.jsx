@@ -7,6 +7,7 @@ import {
   ScrollRestoration,
   useLoaderData,
 } from "react-router";
+import { Footer } from "./components/common/footer";
 import { Navbar } from "./components/navigation/navbar";
 import { AUTH_CHANGED_EVENT, getUser } from "./utils/auth";
 import { NOTIFICATIONS_UNREAD_CHANGED_EVENT } from "./utils/notifications";
@@ -145,9 +146,12 @@ export default function App() {
   }, [currentUser]);
 
   return (
-    <>
+    <div className="flex min-h-full flex-col">
       <Navbar user={currentUser} />
-      <Outlet context={{ user: currentUser }} />
-    </>
+      <div className="flex-1">
+        <Outlet context={{ user: currentUser }} />
+      </div>
+      <Footer />
+    </div>
   );
 }

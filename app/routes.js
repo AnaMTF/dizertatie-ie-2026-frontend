@@ -6,6 +6,7 @@ export default [
   /* Blog */
   route("/blog", "pages/blog.jsx"),
   route("/blog/:slug", "pages/blog-post.jsx"),
+  route("/contact", "pages/contact.jsx"),
 
   /* Only a logged in user can access thiese routes */
   route("/profile", "pages/profile.jsx"),
