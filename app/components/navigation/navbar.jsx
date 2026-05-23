@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import {
   FaBell,
   FaCalendarAlt,
+  FaHospital,
   FaMoon,
   FaNewspaper,
   FaSearch,
@@ -112,6 +113,11 @@ function PatientActions() {
         Blog
       </Link>
 
+      <Link to="/clinics" className="btn btn-sm btn-ghost">
+        <FaHospital />
+        Clinics
+      </Link>
+
       <Link to="/notifications" className="indicator btn btn-sm btn-ghost">
         <FaBell />
         Notifications
@@ -193,6 +199,11 @@ function DoctorActions() {
         Blog
       </Link>
 
+      <Link to="/clinics" className="btn btn-sm btn-ghost">
+        <FaHospital />
+        Clinics
+      </Link>
+
       <Link to="/doctor/profile" className="btn btn-sm btn-ghost">
         <FaUserCircle />
         Profile
@@ -235,6 +246,11 @@ function LoggedOutActions() {
       <Link to="/blog" className="btn btn-sm btn-ghost">
         <FaNewspaper />
         Blog
+      </Link>
+
+      <Link to="/clinics" className="btn btn-sm btn-ghost">
+        <FaHospital />
+        Clinics
       </Link>
 
       <button onClick={handleLogin} className="btn btn-sm btn-ghost">
