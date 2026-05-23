@@ -6,6 +6,7 @@ import {
   Scripts,
   ScrollRestoration,
   useLoaderData,
+  useLocation,
 } from "react-router";
 import { Footer } from "./components/common/footer";
 import { Navbar } from "./components/navigation/navbar";
@@ -70,8 +71,8 @@ export function Layout({ children }) {
         <Meta />
         <Links />
       </head>
-      <body className="flex h-screen flex-col">
-        <main className="flex-1 overflow-y-auto">{children}</main>
+      <body>
+        <main>{children}</main>
         <ScrollRestoration />
         <Scripts />
       </body>
@@ -81,7 +82,9 @@ export function Layout({ children }) {
 
 export default function App() {
   const { user } = useLoaderData();
+  const location = useLocation();
   const [currentUser, setCurrentUser] = useState(user);
+  const isContactPage = location.pathname === "/contact";
 
   useEffect(() => {
     setCurrentUser(user);
@@ -144,6 +147,18 @@ export default function App() {
       navigator.serviceWorker.removeEventListener("message", handleSWMessage);
     };
   }, [currentUser]);
+
+  if (isContactPage) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <Navbar user={currentUser} />
+        <div className="flex-1">
+          <Outlet context={{ user: currentUser }} />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <>

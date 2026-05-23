@@ -71,7 +71,7 @@ export default function ContactPage() {
   }
 
   return (
-    <section className="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6 lg:px-8">
+    <section className="mx-auto flex w-full max-w-2xl items-center px-4 py-8 sm:px-6 lg:px-8">
       <div className="card bg-base-100 shadow-md">
         <div className="card-body gap-4">
           <h1 className="card-title text-2xl">Contact</h1>

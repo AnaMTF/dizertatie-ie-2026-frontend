@@ -20,5 +20,9 @@ export default function Index() {
     }
   }, [navigate, user?.role]);
 
-  return <HeroCarousel isLoggedIn={Boolean(user)} />;
+  return (
+    <section className="h-[calc(100dvh-4rem)] min-h-[calc(100vh-4rem)]">
+      <HeroCarousel isLoggedIn={Boolean(user)} />
+    </section>
+  );
 }
