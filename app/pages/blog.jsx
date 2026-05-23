@@ -9,11 +9,14 @@ import {
   getFavoritePosts,
   removeFavoritePost,
 } from "../utils/blog-favorites.js";
+import {
+  BLOG_IMAGE_FALLBACK_PATH,
+  getBlogImagePathForSlug,
+} from "../utils/blog-image-paths.js";
 
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 10;
 const PAGE_SIZE_OPTIONS = [10, 20, 50];
-const BLOG_IMAGE_FALLBACK_PATH = "/blog-images/blog-fallback-image.jpg";
 
 function toPositiveInt(value, fallback) {
   const parsed = Number.parseInt(value ?? "", 10);
@@ -228,7 +231,8 @@ export default function Blog() {
 
     return sourcePosts.slice(start, end).map((post) => ({
       post,
-      imagePath: BLOG_IMAGE_FALLBACK_PATH,
+      imagePath:
+        getBlogImagePathForSlug(post.meta.slug) || BLOG_IMAGE_FALLBACK_PATH,
     }));
   }, [sourcePosts, staticPagination.limit, staticPagination.page]);
 
@@ -441,6 +445,10 @@ export default function Blog() {
                   alt={`Image for ${post.meta.title}`}
                   className="mt-2 h-28 w-full rounded-xl object-cover md:mt-0 md:w-48"
                   loading="lazy"
+                  onError={(event) => {
+                    event.currentTarget.onerror = null;
+                    event.currentTarget.src = BLOG_IMAGE_FALLBACK_PATH;
+                  }}
                 />
               </div>
             </div>
