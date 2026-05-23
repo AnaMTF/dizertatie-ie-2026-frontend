@@ -3,9 +3,11 @@ import { index, route } from "@react-router/dev/routes";
 export default [
   index("pages/index.jsx"),
 
-  /* Blog */
+  /* Blog & Clinics */
   route("/blog", "pages/blog.jsx"),
   route("/blog/:slug", "pages/blog-post.jsx"),
+  route("/clinics", "pages/clinics.jsx"),
+  route("/clinics/:uuid", "pages/clinic-detail.jsx"),
   route("/contact", "pages/contact.jsx"),
 
   /* Only a logged in user can access thiese routes */
