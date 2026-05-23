@@ -1,10 +1,9 @@
-import { FaMapMarkerAlt } from "react-icons/fa";
+import { FaMapMarkerAlt, FaPhone } from "react-icons/fa";
 import { Link } from "react-router";
 
 export default function ClinicCard({ clinic }) {
   const fallbackImagePath = "/clinic-images/clinic-fallback-image.webp";
   const cardImagePath = clinic.imagePath || fallbackImagePath;
-  const doctorCount = clinic.doctors?.length || 0;
 
   return (
     <div className="card bg-base-100 shadow-md transition-shadow hover:shadow-lg">
@@ -23,19 +22,16 @@ export default function ClinicCard({ clinic }) {
         <h2 className="card-title text-lg">{clinic.name}</h2>
 
         <div className="text-base-content/70 flex items-start gap-2 text-sm">
-          <FaMapMarkerAlt className="mt-0.5 flex-shrink-0" />
+          <FaMapMarkerAlt className="mt-0.5 shrink-0" />
           <span>{clinic.address}</span>
         </div>
 
         {clinic.phone && (
-          <div className="text-base-content/70 text-sm">
-            <span className="font-medium">Phone:</span> {clinic.phone}
+          <div className="text-base-content/70 flex items-start gap-2 text-sm">
+            <FaPhone className="mt-0.5 shrink-0" />
+            <span>{clinic.phone}</span>
           </div>
         )}
-
-        <div className="text-base-content/70 text-sm">
-          <span className="font-medium">Doctors:</span> {doctorCount}
-        </div>
 
         <div className="card-actions mt-4 justify-end">
           <Link
