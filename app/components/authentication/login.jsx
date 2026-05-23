@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FaExclamationTriangle, FaGoogle, FaSignInAlt } from "react-icons/fa";
+import { FaExclamationTriangle, FaSignInAlt } from "react-icons/fa";
 import { useNavigate } from "react-router";
 import isEmail from "validator/lib/isEmail";
 import { API_BASE, setAuth } from "../../utils/auth";
@@ -28,10 +28,6 @@ function LoginForm() {
 
   function handleChange(e) {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  }
-
-  function handleGoogleLogin() {
-    // TODO: implement Google login
   }
 
   async function handleLogin() {
@@ -66,18 +62,11 @@ function LoginForm() {
 
   return (
     <div className="bg-base-100 text-base-content flex h-full flex-col p-10">
-      <div className="flex flex-1 flex-col justify-end gap-4">
-        <h2 className="flex items-center gap-2 text-2xl font-bold">
-          <FaSignInAlt /> Welcome back
-        </h2>
-        <button className="btn btn-outline" onClick={handleGoogleLogin}>
-          <FaGoogle /> Continue with Google
-        </button>
-      </div>
+      <h2 className="flex items-center gap-2 text-2xl font-bold">
+        <FaSignInAlt /> Welcome back
+      </h2>
 
-      <div className="divider">or</div>
-
-      <form className="flex flex-1 flex-col gap-4">
+      <form className="flex flex-1 flex-col gap-4 mt-6">
         {error && (
           <div className="alert alert-error">
             <FaExclamationTriangle />

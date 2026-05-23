@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import {
   FaExclamationTriangle,
-  FaGoogle,
   FaLock,
   FaNotesMedical,
   FaUserPlus,
@@ -176,10 +175,6 @@ function SelectField({ label, name, value, onChange, options }) {
 }
 
 function StepEmail({ onNext, values, onChange }) {
-  function handleGoogleLogin() {
-    // TODO: implement Google login
-  }
-
   const isValid = isEmail(values.email);
 
   return (
@@ -187,13 +182,7 @@ function StepEmail({ onNext, values, onChange }) {
       <h2 className="flex items-center gap-2 text-2xl font-bold">
         <FaUserPlus /> Create an account
       </h2>
-      <button className="btn btn-outline" onClick={handleGoogleLogin}>
-        <FaGoogle /> Continue with Google
-      </button>
-
-      <div className="divider">or</div>
-
-      <form className="flex flex-1 flex-col gap-4">
+      <form className="flex flex-1 flex-col gap-4 mt-6">
         <Field
           label="Email"
           type="email"
@@ -220,7 +209,7 @@ function StepPassword({ onNext, onBack, values, onChange }) {
 
   return (
     <form className="flex h-full flex-col gap-4">
-      <h2 className="flex items-center gap-2 text-2xl font-bold">
+      <h2 className="flex items-center gap-2 text-2xl font-bold mb-2">
         <FaLock /> Set your password
       </h2>
       <Field
@@ -268,7 +257,7 @@ function StepPersonalInfo({ onNext, onBack, values, onChange }) {
 
   return (
     <form className="flex h-full flex-col gap-4">
-      <h2 className="flex items-center gap-2 text-2xl font-bold">
+      <h2 className="flex items-center gap-2 text-2xl font-bold mb-2">
         <FaVenusMars /> Personal info
       </h2>
       <div className="grid grid-cols-2 gap-4">
@@ -340,7 +329,7 @@ function StepClinic({
 
   return (
     <form className="flex h-full flex-col gap-4">
-      <h2 className="flex items-center gap-2 text-2xl font-bold">
+      <h2 className="flex items-center gap-2 text-2xl font-bold mb-2">
         <FaNotesMedical /> Favorite clinic
       </h2>
       <p className="text-base-content/60 text-sm">
@@ -405,7 +394,7 @@ function StepAdditionalInfo({
 
   return (
     <form className="flex h-full flex-col gap-4">
-      <h2 className="flex items-center gap-2 text-2xl font-bold">
+      <h2 className="flex items-center gap-2 text-2xl font-bold mb-2">
         <FaNotesMedical /> Additional information
       </h2>
       <p className="text-base-content/60 text-sm">
