@@ -146,12 +146,10 @@ export default function App() {
   }, [currentUser]);
 
   return (
-    <div className="flex min-h-full flex-col">
+    <>
       <Navbar user={currentUser} />
-      <div className="flex-1">
-        <Outlet context={{ user: currentUser }} />
-      </div>
+      <Outlet context={{ user: currentUser }} />
       <Footer />
-    </div>
+    </>
   );
 }
