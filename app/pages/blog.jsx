@@ -13,6 +13,7 @@ import {
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 10;
 const PAGE_SIZE_OPTIONS = [10, 20, 50];
+const BLOG_IMAGE_FALLBACK_PATH = "/blog-images/blog-fallback-image.jpg";
 
 function toPositiveInt(value, fallback) {
   const parsed = Number.parseInt(value ?? "", 10);
@@ -203,7 +204,21 @@ export default function Blog() {
 
   const displayPosts = results
     ? results
-        .map(({ slug }) => posts.find((p) => p.meta.slug === slug))
+        .map(({ slug, imagePath }) => {
+          const post = posts.find((item) => item.meta.slug === slug);
+
+          if (!post) {
+            return null;
+          }
+
+          return {
+            post,
+            imagePath:
+              typeof imagePath === "string" && imagePath.trim()
+                ? imagePath
+                : BLOG_IMAGE_FALLBACK_PATH,
+          };
+        })
         .filter(Boolean)
     : [];
 
@@ -211,7 +226,10 @@ export default function Blog() {
     const start = (staticPagination.page - 1) * staticPagination.limit;
     const end = start + staticPagination.limit;
 
-    return sourcePosts.slice(start, end);
+    return sourcePosts.slice(start, end).map((post) => ({
+      post,
+      imagePath: BLOG_IMAGE_FALLBACK_PATH,
+    }));
   }, [sourcePosts, staticPagination.limit, staticPagination.page]);
 
   const visiblePosts = query ? displayPosts : defaultPosts;
@@ -375,43 +393,55 @@ export default function Blog() {
         <div>{paginationControls}</div>
 
         <div className="flex flex-col gap-6">
-          {visiblePosts.map((post) => (
+          {visiblePosts.map(({ post, imagePath }) => (
             <div
               key={post.meta.slug}
               className="card bg-base-200 hover:bg-base-300 transition-colors"
             >
-              <div className="card-body">
-                <div className="flex items-start justify-between gap-3">
-                  <Link
-                    to={`/blog/${post.meta.slug}`}
-                    className="card-title link-hover link"
-                  >
-                    {post.meta.title}
-                  </Link>
-                  {canFavorite && (
-                    <button
-                      type="button"
-                      className={`btn btn-ghost btn-sm btn-circle ${favoriteSlugs.has(post.meta.slug) ? "text-error" : "text-base-content/60"}`}
-                      onClick={() => handleToggleFavorite(post.meta.slug)}
-                      disabled={pendingFavoriteSlug === post.meta.slug}
-                      title={
-                        favoriteSlugs.has(post.meta.slug)
-                          ? "Remove from favorites"
-                          : "Add to favorites"
-                      }
+              <div className="card-body md:flex-row md:items-start md:justify-between md:gap-6">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-3">
+                    <Link
+                      to={`/blog/${post.meta.slug}`}
+                      className="card-title link-hover link"
                     >
-                      <FaHeart />
-                    </button>
-                  )}
+                      {post.meta.title}
+                    </Link>
+                    {canFavorite && (
+                      <button
+                        type="button"
+                        className={`btn btn-ghost btn-sm btn-circle ${favoriteSlugs.has(post.meta.slug) ? "text-error" : "text-base-content/60"}`}
+                        onClick={() => handleToggleFavorite(post.meta.slug)}
+                        disabled={pendingFavoriteSlug === post.meta.slug}
+                        title={
+                          favoriteSlugs.has(post.meta.slug)
+                            ? "Remove from favorites"
+                            : "Add to favorites"
+                        }
+                      >
+                        <FaHeart />
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-base-content/70">{post.meta.summary}</p>
+                  <p className="text-base-content/50 mt-1 text-sm">
+                    {new Date(post.meta.publishedAt).toLocaleDateString(
+                      "en-GB",
+                      {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      },
+                    )}
+                  </p>
                 </div>
-                <p className="text-base-content/70">{post.meta.summary}</p>
-                <p className="text-base-content/50 mt-1 text-sm">
-                  {new Date(post.meta.publishedAt).toLocaleDateString("en-GB", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </p>
+
+                <img
+                  src={imagePath}
+                  alt={`Image for ${post.meta.title}`}
+                  className="mt-2 h-28 w-full rounded-xl object-cover md:mt-0 md:w-48"
+                  loading="lazy"
+                />
               </div>
             </div>
           ))}
