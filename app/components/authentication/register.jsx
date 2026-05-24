@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import {
   FaExclamationTriangle,
-  FaLock,
   FaNotesMedical,
   FaUserPlus,
   FaVenusMars,
@@ -174,44 +173,26 @@ function SelectField({ label, name, value, onChange, options }) {
   );
 }
 
-function StepEmail({ onNext, values, onChange }) {
-  const isValid = isEmail(values.email);
-
-  return (
-    <>
-      <h2 className="flex items-center gap-2 text-2xl font-bold">
-        <FaUserPlus /> Create an account
-      </h2>
-      <form className="flex flex-1 flex-col gap-4 mt-6">
-        <Field
-          label="Email"
-          type="email"
-          name="email"
-          value={values.email}
-          onChange={onChange}
-        />
-        <StepActions
-          onNext={onNext}
-          disabled={!isValid}
-          tooltipMessage="Please enter a valid email address"
-        />
-      </form>
-    </>
-  );
-}
-
-function StepPassword({ onNext, onBack, values, onChange }) {
+function StepEmailAndPassword({ onNext, values, onChange }) {
+  const emailValid = isEmail(values.email);
   const passwordValidation = validatePassword(values.password);
   const passwordsMatch =
     values.password === values.confirmPassword && values.password.length > 0;
 
-  const isValid = passwordValidation.isValid && passwordsMatch;
+  const isValid = emailValid && passwordValidation.isValid && passwordsMatch;
 
   return (
     <form className="flex h-full flex-col gap-4">
-      <h2 className="flex items-center gap-2 text-2xl font-bold mb-2">
-        <FaLock /> Set your password
+      <h2 className="mb-2 flex items-center gap-2 text-2xl font-bold">
+        <FaUserPlus /> Create an account
       </h2>
+      <Field
+        label="Email"
+        type="email"
+        name="email"
+        value={values.email}
+        onChange={onChange}
+      />
       <Field
         label="Password"
         type="password"
@@ -232,12 +213,13 @@ function StepPassword({ onNext, onBack, values, onChange }) {
       />
       <StepActions
         onNext={onNext}
-        onBack={onBack}
         disabled={!isValid}
         tooltipMessage={
-          !passwordValidation.isValid
-            ? "Please meet all password requirements"
-            : "Passwords must match"
+          !emailValid
+            ? "Please enter a valid email address"
+            : !passwordValidation.isValid
+              ? "Please meet all password requirements"
+              : "Passwords must match"
         }
       />
     </form>
@@ -257,7 +239,7 @@ function StepPersonalInfo({ onNext, onBack, values, onChange }) {
 
   return (
     <form className="flex h-full flex-col gap-4">
-      <h2 className="flex items-center gap-2 text-2xl font-bold mb-2">
+      <h2 className="mb-2 flex items-center gap-2 text-2xl font-bold">
         <FaVenusMars /> Personal info
       </h2>
       <div className="grid grid-cols-2 gap-4">
@@ -329,7 +311,7 @@ function StepClinic({
 
   return (
     <form className="flex h-full flex-col gap-4">
-      <h2 className="flex items-center gap-2 text-2xl font-bold mb-2">
+      <h2 className="mb-2 flex items-center gap-2 text-2xl font-bold">
         <FaNotesMedical /> Favorite clinic
       </h2>
       <p className="text-base-content/60 text-sm">
@@ -394,7 +376,7 @@ function StepAdditionalInfo({
 
   return (
     <form className="flex h-full flex-col gap-4">
-      <h2 className="flex items-center gap-2 text-2xl font-bold mb-2">
+      <h2 className="mb-2 flex items-center gap-2 text-2xl font-bold">
         <FaNotesMedical /> Additional information
       </h2>
       <p className="text-base-content/60 text-sm">
@@ -566,17 +548,13 @@ function RegisterForm() {
   return (
     <div className="bg-base-100 text-base-content flex h-full flex-col gap-4 p-10">
       {step === 0 && (
-        <StepEmail onNext={nextStep} values={form} onChange={handleChange} />
-      )}
-      {step === 1 && (
-        <StepPassword
+        <StepEmailAndPassword
           onNext={nextStep}
-          onBack={prevStep}
           values={form}
           onChange={handleChange}
         />
       )}
-      {step === 2 && (
+      {step === 1 && (
         <StepPersonalInfo
           onNext={nextStep}
           onBack={prevStep}
@@ -584,7 +562,7 @@ function RegisterForm() {
           onChange={handleChange}
         />
       )}
-      {step === 3 && (
+      {step === 2 && (
         <StepClinic
           onNext={nextStep}
           onBack={prevStep}
@@ -595,7 +573,7 @@ function RegisterForm() {
           error={clinicsError}
         />
       )}
-      {step === 4 && (
+      {step === 3 && (
         <StepAdditionalInfo
           onBack={prevStep}
           values={form}
