@@ -6,7 +6,6 @@ import {
   Scripts,
   ScrollRestoration,
   useLoaderData,
-  useLocation,
 } from "react-router";
 import { Footer } from "./components/common/footer";
 import { Navbar } from "./components/navigation/navbar";
@@ -71,7 +70,7 @@ export function Layout({ children }) {
         <Meta />
         <Links />
       </head>
-      <body>
+      <body className="min-h-screen">
         <main>{children}</main>
         <ScrollRestoration />
         <Scripts />
@@ -82,9 +81,7 @@ export function Layout({ children }) {
 
 export default function App() {
   const { user } = useLoaderData();
-  const location = useLocation();
   const [currentUser, setCurrentUser] = useState(user);
-  const isContactPage = location.pathname === "/contact";
 
   useEffect(() => {
     setCurrentUser(user);
@@ -148,23 +145,13 @@ export default function App() {
     };
   }, [currentUser]);
 
-  if (isContactPage) {
-    return (
-      <div className="flex min-h-screen flex-col">
-        <Navbar user={currentUser} />
-        <div className="flex-1">
-          <Outlet context={{ user: currentUser }} />
-        </div>
-        <Footer />
-      </div>
-    );
-  }
-
   return (
-    <>
+    <div className="flex min-h-screen flex-col">
       <Navbar user={currentUser} />
-      <Outlet context={{ user: currentUser }} />
+      <div className="flex-1">
+        <Outlet context={{ user: currentUser }} />
+      </div>
       <Footer />
-    </>
+    </div>
   );
 }

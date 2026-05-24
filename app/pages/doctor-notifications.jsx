@@ -356,7 +356,9 @@ export default function DoctorNotificationsPage() {
                   <li key={notification.uuid} className="p-4">
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div className="min-w-0 flex-1">
-                        <p className="mb-1 font-semibold">{notification.title}</p>
+                        <p className="mb-1 font-semibold">
+                          {notification.title}
+                        </p>
                         <p className="text-base-content/70 text-sm">
                           {notification.body}
                         </p>
