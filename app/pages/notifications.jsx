@@ -64,6 +64,30 @@ function extractErrorMessage(error) {
   return "Something went wrong";
 }
 
+function getPriorityBadgeClass(priority) {
+  if (priority === "high") {
+    return "badge-error";
+  }
+
+  if (priority === "low") {
+    return "badge-info";
+  }
+
+  return "badge-warning";
+}
+
+function getPriorityLabel(priority) {
+  if (priority === "high") {
+    return "High";
+  }
+
+  if (priority === "low") {
+    return "Low";
+  }
+
+  return "Medium";
+}
+
 export default function NotificationsPage() {
   const navigate = useNavigate();
   const [items, setItems] = useState([]);
@@ -368,6 +392,11 @@ export default function NotificationsPage() {
                       </div>
 
                       <div className="flex items-center gap-2 self-start sm:self-center">
+                        <span
+                          className={`badge badge-sm h-8 px-3 ${getPriorityBadgeClass(notification.priority)}`}
+                        >
+                          {getPriorityLabel(notification.priority)}
+                        </span>
                         {!notification.readAt && (
                           <span className="badge badge-info badge-sm h-8 px-3">
                             Unread
