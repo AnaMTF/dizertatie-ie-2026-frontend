@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { redirect, useSearchParams } from "react-router";
 import AppointmentAttachments from "../components/appointments/appointment-attachments";
 import AppointmentsSidebar from "../components/appointments/appointments-sidebar";
@@ -7,6 +7,9 @@ import CancelAppointmentModal from "../components/appointments/cancel-appointmen
 import CreateAppointment from "../components/appointments/create-appointment";
 import UpdateAppointmentModal from "../components/appointments/update-appointment";
 import { API_BASE, getToken, getUser } from "../utils/auth";
+import { APP_DATA_REFRESH_EVENT } from "../utils/notifications";
+
+const AUTO_REFRESH_INTERVAL_MS = 30000;
 
 export function clientLoader() {
   if (!getToken()) return redirect("/?login=true");
@@ -551,10 +554,19 @@ export default function Appointments() {
   const [activeAppointment, setActiveAppointment] = useState(null);
   const [detailsAppointment, setDetailsAppointment] = useState(null);
   const [createAppointmentDraft, setCreateAppointmentDraft] = useState(null);
+  const requestInFlightRef = useRef(false);
 
-  const loadAppointments = useCallback(async () => {
+  const loadAppointments = useCallback(async ({ silent = false } = {}) => {
+    if (requestInFlightRef.current) {
+      return;
+    }
+
+    requestInFlightRef.current = true;
+
     try {
-      setLoading(true);
+      if (!silent) {
+        setLoading(true);
+      }
       setError("");
 
       const response = await fetch(`${API_BASE}/appointment`, {
@@ -573,12 +585,60 @@ export default function Appointments() {
     } catch (requestError) {
       setError(requestError.message || "Failed to load appointments");
     } finally {
-      setLoading(false);
+      requestInFlightRef.current = false;
+      if (!silent) {
+        setLoading(false);
+      }
     }
   }, []);
 
   useEffect(() => {
     loadAppointments();
+  }, [loadAppointments]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    function refreshSilently() {
+      void loadAppointments({ silent: true });
+    }
+
+    function handleFocus() {
+      if (document.visibilityState === "visible") {
+        refreshSilently();
+      }
+    }
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === "visible") {
+        refreshSilently();
+      }
+    }
+
+    function handleDataRefreshEvent() {
+      refreshSilently();
+    }
+
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState !== "visible") {
+        return;
+      }
+
+      refreshSilently();
+    }, AUTO_REFRESH_INTERVAL_MS);
+
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener(APP_DATA_REFRESH_EVENT, handleDataRefreshEvent);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener(APP_DATA_REFRESH_EVENT, handleDataRefreshEvent);
+    };
   }, [loadAppointments]);
 
   useEffect(() => {

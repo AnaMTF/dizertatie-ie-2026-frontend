@@ -1,8 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { FaEye, FaPlus, FaRobot, FaSyncAlt } from "react-icons/fa";
 import { Link, redirect, useSearchParams } from "react-router";
 import CreateScan from "../components/scans/create-scan";
 import { API_BASE, getToken, getUser } from "../utils/auth";
+import { APP_DATA_REFRESH_EVENT } from "../utils/notifications";
+
+const AUTO_REFRESH_INTERVAL_MS = 30000;
 
 export function clientLoader() {
   if (!getToken()) return redirect("/?login=true");
@@ -1004,9 +1007,19 @@ export default function AiScan() {
   const [selectedRegionKey, setSelectedRegionKey] = useState("");
   const [selectedScan, setSelectedScan] = useState(null);
   const [deepLinkOpenedScanUuid, setDeepLinkOpenedScanUuid] = useState(null);
+  const requestInFlightRef = useRef(false);
 
-  const fetchScans = useCallback(async () => {
-    setLoading(true);
+  const fetchScans = useCallback(async ({ silent = false } = {}) => {
+    if (requestInFlightRef.current) {
+      return;
+    }
+
+    requestInFlightRef.current = true;
+
+    if (!silent) {
+      setLoading(true);
+    }
+
     setError(null);
     try {
       const res = await fetch(`${API_BASE}/scan`, {
@@ -1026,12 +1039,60 @@ export default function AiScan() {
     } catch (fetchError) {
       setError(fetchError.message || "Unable to load scans.");
     } finally {
-      setLoading(false);
+      requestInFlightRef.current = false;
+      if (!silent) {
+        setLoading(false);
+      }
     }
   }, []);
 
   useEffect(() => {
     fetchScans();
+  }, [fetchScans]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    function refreshSilently() {
+      void fetchScans({ silent: true });
+    }
+
+    function handleFocus() {
+      if (document.visibilityState === "visible") {
+        refreshSilently();
+      }
+    }
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === "visible") {
+        refreshSilently();
+      }
+    }
+
+    function handleDataRefreshEvent() {
+      refreshSilently();
+    }
+
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState !== "visible") {
+        return;
+      }
+
+      refreshSilently();
+    }, AUTO_REFRESH_INTERVAL_MS);
+
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener(APP_DATA_REFRESH_EVENT, handleDataRefreshEvent);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener(APP_DATA_REFRESH_EVENT, handleDataRefreshEvent);
+    };
   }, [fetchScans]);
 
   useEffect(() => {
@@ -1105,6 +1166,23 @@ export default function AiScan() {
       }, 0);
     }
   }, [searchParams, scans, deepLinkOpenedScanUuid]);
+
+  useEffect(() => {
+    if (!selectedScan?.uuid) {
+      return;
+    }
+
+    const refreshedSelectedScan = scans.find(
+      (scanItem) => scanItem.uuid === selectedScan.uuid,
+    );
+
+    if (!refreshedSelectedScan) {
+      setSelectedScan(null);
+      return;
+    }
+
+    setSelectedScan(refreshedSelectedScan);
+  }, [scans, selectedScan?.uuid]);
 
   function handleNewScan() {
     if (optionsLoading || scanOptions.length === 0 || !selectedRegionKey) {

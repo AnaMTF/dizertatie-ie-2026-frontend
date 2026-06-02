@@ -2,6 +2,7 @@ import { API_BASE, getToken } from "./auth";
 
 export const NOTIFICATIONS_UNREAD_CHANGED_EVENT =
   "notifications-unread-changed";
+export const APP_DATA_REFRESH_EVENT = "app-data-refresh";
 
 function getAuthHeaders() {
   const token = getToken();

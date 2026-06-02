@@ -10,7 +10,10 @@ import {
 import { Footer } from "./components/common/footer";
 import { Navbar } from "./components/navigation/navbar";
 import { AUTH_CHANGED_EVENT, getUser } from "./utils/auth";
-import { NOTIFICATIONS_UNREAD_CHANGED_EVENT } from "./utils/notifications";
+import {
+  APP_DATA_REFRESH_EVENT,
+  NOTIFICATIONS_UNREAD_CHANGED_EVENT,
+} from "./utils/notifications";
 import { enablePushNotifications } from "./utils/push";
 import { THEME_CHANGED_EVENT, getActiveTheme } from "./utils/theme";
 
@@ -135,6 +138,7 @@ export default function App() {
     function handleSWMessage(event) {
       if (event.data?.type === "push-notification-received") {
         window.dispatchEvent(new Event(NOTIFICATIONS_UNREAD_CHANGED_EVENT));
+        window.dispatchEvent(new Event(APP_DATA_REFRESH_EVENT));
       }
     }
 

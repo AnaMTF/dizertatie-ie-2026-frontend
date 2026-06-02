@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { redirect, useSearchParams } from "react-router";
 import AppointmentAttachments from "../components/appointments/appointment-attachments";
 import AppointmentsSidebar from "../components/appointments/appointments-sidebar";
@@ -6,6 +6,9 @@ import AppointmentsTopBar from "../components/appointments/appointments-top-bar"
 import CancelAppointmentModal from "../components/appointments/cancel-appointment";
 import DoctorUpdateAppointmentModal from "../components/appointments/doctor-update-appointment";
 import { API_BASE, getToken, getUser } from "../utils/auth";
+import { APP_DATA_REFRESH_EVENT } from "../utils/notifications";
+
+const AUTO_REFRESH_INTERVAL_MS = 30000;
 
 const DOCTOR_STATUS_OPTIONS = [
   { value: "all", label: "All statuses" },
@@ -569,10 +572,19 @@ export default function DoctorAppointmentsPage() {
     useState(false);
   const [detailsAppointment, setDetailsAppointment] = useState(null);
   const [actionLoadingUuid, setActionLoadingUuid] = useState("");
+  const requestInFlightRef = useRef(false);
 
-  const loadAppointments = useCallback(async () => {
+  const loadAppointments = useCallback(async ({ silent = false } = {}) => {
+    if (requestInFlightRef.current) {
+      return;
+    }
+
+    requestInFlightRef.current = true;
+
     try {
-      setLoading(true);
+      if (!silent) {
+        setLoading(true);
+      }
       setError("");
 
       const response = await fetch(`${API_BASE}/appointment`, {
@@ -591,12 +603,60 @@ export default function DoctorAppointmentsPage() {
     } catch (requestError) {
       setError(requestError.message || "Failed to load appointments");
     } finally {
-      setLoading(false);
+      requestInFlightRef.current = false;
+      if (!silent) {
+        setLoading(false);
+      }
     }
   }, []);
 
   useEffect(() => {
     loadAppointments();
+  }, [loadAppointments]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    function refreshSilently() {
+      void loadAppointments({ silent: true });
+    }
+
+    function handleFocus() {
+      if (document.visibilityState === "visible") {
+        refreshSilently();
+      }
+    }
+
+    function handleVisibilityChange() {
+      if (document.visibilityState === "visible") {
+        refreshSilently();
+      }
+    }
+
+    function handleDataRefreshEvent() {
+      refreshSilently();
+    }
+
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState !== "visible") {
+        return;
+      }
+
+      refreshSilently();
+    }, AUTO_REFRESH_INTERVAL_MS);
+
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener(APP_DATA_REFRESH_EVENT, handleDataRefreshEvent);
+
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener(APP_DATA_REFRESH_EVENT, handleDataRefreshEvent);
+    };
   }, [loadAppointments]);
 
   useEffect(() => {
