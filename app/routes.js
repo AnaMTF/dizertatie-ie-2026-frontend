@@ -18,6 +18,7 @@ export default [
 
   /* Doctor-specific routes */
   route("/doctor/profile", "pages/doctor-profile.jsx"),
+  route("/doctor/patients/:uuid", "pages/doctor-patient-profile.jsx"),
   route("/doctor/appointments", "pages/doctor-appointments.jsx"),
   route("/doctor/scan-review-queue", "pages/doctor-scan-review-queue.jsx"),
   route("/doctor/notifications", "pages/doctor-notifications.jsx"),

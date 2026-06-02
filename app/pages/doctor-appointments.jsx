@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { redirect, useSearchParams } from "react-router";
+import { Link, redirect, useSearchParams } from "react-router";
 import AppointmentAttachments from "../components/appointments/appointment-attachments";
 import AppointmentsSidebar from "../components/appointments/appointments-sidebar";
 import AppointmentsTopBar from "../components/appointments/appointments-top-bar";
@@ -106,6 +106,16 @@ function AppointmentDetailsModal({ appointment }) {
                 <p className="text-base-content/70 text-sm">
                   {appointment.patient?.email || "-"}
                 </p>
+                {appointment.patient?.uuid ? (
+                  <div className="mt-3">
+                    <Link
+                      to={`/doctor/patients/${appointment.patient.uuid}`}
+                      className="btn btn-primary btn-sm"
+                    >
+                      View patient profile
+                    </Link>
+                  </div>
+                ) : null}
               </div>
             </div>
 
@@ -655,7 +665,10 @@ export default function DoctorAppointmentsPage() {
       window.clearInterval(intervalId);
       window.removeEventListener("focus", handleFocus);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener(APP_DATA_REFRESH_EVENT, handleDataRefreshEvent);
+      window.removeEventListener(
+        APP_DATA_REFRESH_EVENT,
+        handleDataRefreshEvent,
+      );
     };
   }, [loadAppointments]);
 
