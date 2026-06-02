@@ -4,6 +4,7 @@ import { Link, redirect, useLoaderData } from "react-router";
 import { postsBySlug } from "../posts/index.js";
 import { API_BASE, getToken, getUser, setAuth } from "../utils/auth";
 import { canManageFavorites, getFavoritePosts } from "../utils/blog-favorites";
+import { listReminderNotifications } from "../utils/notifications";
 
 const ALCOHOL_FREQUENCY_OPTIONS = [
   { value: "never", label: "Never" },
@@ -114,6 +115,222 @@ function StatusBadge({ status }) {
   };
   const { cls, label } = map[status] || { cls: "badge-neutral", label: status };
   return <span className={`badge badge-sm ${cls}`}>{label}</span>;
+}
+
+function toReminderTargetDate(reminder) {
+  if (reminder.targetDateTime) {
+    const targetDateTime = new Date(reminder.targetDateTime);
+
+    if (!Number.isNaN(targetDateTime.getTime())) {
+      return targetDateTime;
+    }
+  }
+
+  if (reminder.targetDate) {
+    const targetDate = new Date(`${reminder.targetDate}T00:00:00`);
+
+    if (!Number.isNaN(targetDate.getTime())) {
+      return targetDate;
+    }
+  }
+
+  const createdAt = new Date(reminder.createdAt);
+  return Number.isNaN(createdAt.getTime()) ? null : createdAt;
+}
+
+function getReminderCountdown(reminder) {
+  const targetDate = toReminderTargetDate(reminder);
+
+  if (!targetDate) {
+    return "Date unavailable";
+  }
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const targetDay = new Date(
+    targetDate.getFullYear(),
+    targetDate.getMonth(),
+    targetDate.getDate(),
+  );
+  const diffDays = Math.round(
+    (targetDay.getTime() - today.getTime()) / (24 * 60 * 60 * 1000),
+  );
+
+  if (diffDays === 0) {
+    return "Today";
+  }
+
+  if (diffDays === 1) {
+    return "Tomorrow";
+  }
+
+  if (diffDays > 1) {
+    return `In ${diffDays} days`;
+  }
+
+  if (diffDays === -1) {
+    return "1 day overdue";
+  }
+
+  return `${Math.abs(diffDays)} days overdue`;
+}
+
+function formatReminderDate(reminder) {
+  const targetDate = toReminderTargetDate(reminder);
+
+  if (!targetDate) {
+    return "Date unavailable";
+  }
+
+  if (reminder.targetDateTime) {
+    return targetDate.toLocaleString("en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  }
+
+  return targetDate.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function reminderBadgeClass(reminderKind) {
+  return reminderKind === "follow_up" ? "badge-warning" : "badge-primary";
+}
+
+function reminderBadgeLabel(reminderKind) {
+  return reminderKind === "follow_up" ? "Follow-up" : "Appointment";
+}
+
+function RemindersWidget() {
+  const [reminders, setReminders] = useState([]);
+  const [totalReminders, setTotalReminders] = useState(0);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function load() {
+      try {
+        const result = await listReminderNotifications({ page: 1, limit: 6 });
+
+        if (!isMounted) {
+          return;
+        }
+
+        const sortedReminders = [...result.items].sort((first, second) => {
+          const firstDate =
+            toReminderTargetDate(first)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+          const secondDate =
+            toReminderTargetDate(second)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+
+          if (firstDate === secondDate) {
+            return (
+              new Date(second.createdAt).getTime() -
+              new Date(first.createdAt).getTime()
+            );
+          }
+
+          return firstDate - secondDate;
+        });
+
+        setTotalReminders(
+          result.pagination.totalItems ?? sortedReminders.length,
+        );
+        setReminders(sortedReminders.slice(0, 4));
+      } catch {
+        if (!isMounted) {
+          return;
+        }
+
+        setReminders([]);
+        setTotalReminders(0);
+      }
+    }
+
+    load();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  return (
+    <div className="card bg-base-200 w-full shadow">
+      <div className="card-body p-4">
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="text-base-content/40 text-xs font-semibold tracking-widest uppercase">
+            Reminders
+          </h2>
+          {totalReminders > 0 && (
+            <span className="badge badge-neutral badge-sm">
+              {totalReminders}
+            </span>
+          )}
+        </div>
+
+        {reminders.length === 0 ? (
+          <p className="text-base-content/40 text-sm">
+            No reminders right now.
+          </p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {reminders.map((reminder) => (
+              <Link
+                key={reminder.uuid}
+                to={reminder.url}
+                className="bg-base-100 hover:bg-base-300 rounded-box flex flex-col gap-2 p-3 transition"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">
+                      {reminder.title}
+                    </p>
+                    <p className="text-base-content/60 line-clamp-2 text-xs">
+                      {reminder.body}
+                    </p>
+                  </div>
+                  <span
+                    className={`badge badge-sm ${reminderBadgeClass(reminder.reminderKind)}`}
+                  >
+                    {reminderBadgeLabel(reminder.reminderKind)}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between gap-3 text-xs">
+                  <span className="text-base-content/60">
+                    {reminder.doctorName ||
+                      reminder.specialty ||
+                      formatReminderDate(reminder)}
+                  </span>
+                  <span className="text-primary font-semibold">
+                    {getReminderCountdown(reminder)}
+                  </span>
+                </div>
+
+                {reminder.doctorName || reminder.specialty ? (
+                  <p className="text-base-content/50 text-xs">
+                    {formatReminderDate(reminder)}
+                  </p>
+                ) : null}
+              </Link>
+            ))}
+          </div>
+        )}
+
+        <Link
+          to="/notifications"
+          className="btn btn-ghost btn-sm mt-2 justify-start"
+        >
+          View all reminders →
+        </Link>
+      </div>
+    </div>
+  );
 }
 
 function RecentScans() {
@@ -1098,6 +1315,8 @@ export default function Profile() {
             </div>
 
             <RecentScans />
+
+            <RemindersWidget />
 
             <UpcomingAppointments />
 

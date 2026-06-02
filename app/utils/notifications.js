@@ -53,8 +53,17 @@ async function parseResponse(response) {
 }
 
 export async function listNotifications({ page = 1, limit = 20 } = {}) {
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+  });
+
+  if (arguments[0]?.kind) {
+    params.set("kind", arguments[0].kind);
+  }
+
   const response = await fetch(
-    `${API_BASE}/notifications?page=${page}&limit=${limit}`,
+    `${API_BASE}/notifications?${params.toString()}`,
     {
       headers: getAuthHeaders(),
     },
@@ -70,6 +79,29 @@ export async function listNotifications({ page = 1, limit = 20 } = {}) {
       totalItems: 0,
       totalPages: 1,
     },
+  };
+}
+
+export async function listReminderNotifications({ page = 1, limit = 5 } = {}) {
+  const result = await listNotifications({ page, limit, kind: "reminder" });
+
+  return {
+    items: result.items.map((item) => ({
+      uuid: item.uuid,
+      title: item.title,
+      body: item.body,
+      createdAt: item.createdAt,
+      readAt: item.readAt,
+      url: item.data?.url || "/notifications",
+      reminderKind:
+        item.data?.reminderKind ||
+        (item.type === "follow_up_reminder" ? "follow_up" : "appointment"),
+      targetDateTime: item.data?.targetDateTime || null,
+      targetDate: item.data?.targetDate || null,
+      specialty: item.data?.specialty || null,
+      doctorName: item.data?.doctorName || null,
+    })),
+    pagination: result.pagination,
   };
 }
 
