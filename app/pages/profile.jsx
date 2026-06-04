@@ -357,7 +357,7 @@ function UpcomingAppointmentsWidget() {
         )}
 
         <Link
-          to="/notifications"
+          to="/appointments?status=confirmed&upcoming=1"
           className="btn btn-ghost btn-sm mt-2 justify-start"
         >
           View all upcoming appointments →
@@ -527,10 +527,10 @@ function FollowUpRemindersWidget() {
         )}
 
         <Link
-          to="/appointments"
+          to="/appointments?create=true"
           className="btn btn-ghost btn-sm mt-2 justify-start"
         >
-          View follow-up options →
+          Book follow-up appointment →
         </Link>
       </div>
     </div>

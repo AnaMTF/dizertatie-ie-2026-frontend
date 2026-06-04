@@ -557,6 +557,37 @@ export default function Appointments() {
   const [createAppointmentDraft, setCreateAppointmentDraft] = useState(null);
   const requestInFlightRef = useRef(false);
 
+  useEffect(() => {
+    const requestedStatus = searchParams.get("status");
+    const requestedUpcomingOnly = searchParams.get("upcoming");
+    const allowedStatuses = new Set([
+      "all",
+      "scheduled",
+      "confirmed",
+      "rescheduled",
+      "completed",
+      "cancelled",
+    ]);
+
+    if (
+      requestedStatus &&
+      allowedStatuses.has(requestedStatus) &&
+      requestedStatus !== statusFilter
+    ) {
+      setStatusFilter(requestedStatus);
+    }
+
+    if (requestedUpcomingOnly) {
+      const shouldShowUpcomingOnly = ["1", "true", "yes"].includes(
+        requestedUpcomingOnly.toLowerCase(),
+      );
+
+      if (shouldShowUpcomingOnly !== showUpcomingOnly) {
+        setShowUpcomingOnly(shouldShowUpcomingOnly);
+      }
+    }
+  }, [searchParams, showUpcomingOnly, statusFilter]);
+
   const loadAppointments = useCallback(async ({ silent = false } = {}) => {
     if (requestInFlightRef.current) {
       return;
