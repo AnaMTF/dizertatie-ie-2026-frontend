@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
+import DoctorCard from "../doctors/doctor-card";
 
 const SPECIALIZATION_LABELS = {
   general: "General Practice",
@@ -75,21 +76,12 @@ export default function DoctorListBySpecialization({ doctors = [] }) {
             </button>
 
             {expanded[specialization] && (
-              <div className="border-base-300 bg-base-50 border-t p-4">
-                <ul className="space-y-3">
+              <div className="border-base-300 border-t p-4">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                   {groupedDoctors[specialization].map((doctor) => (
-                    <li key={doctor.uuid} className="flex items-center gap-3">
-                      <div className="flex-1">
-                        <p className="font-medium">
-                          Dr. {doctor.firstName} {doctor.lastName}
-                        </p>
-                        <p className="text-base-content/60 text-sm">
-                          {doctor.email}
-                        </p>
-                      </div>
-                    </li>
+                    <DoctorCard key={doctor.uuid} doctor={doctor} />
                   ))}
-                </ul>
+                </div>
               </div>
             )}
           </div>
