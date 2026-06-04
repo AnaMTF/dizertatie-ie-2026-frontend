@@ -105,6 +105,29 @@ export async function listReminderNotifications({ page = 1, limit = 5 } = {}) {
   };
 }
 
+export async function listFollowUpReminders() {
+  const response = await fetch(`${API_BASE}/appointment/follow-up-reminders`, {
+    headers: getAuthHeaders(),
+  });
+
+  const json = await parseResponse(response);
+  const items = json.data || [];
+
+  return items.map((item) => ({
+    uuid: item.uuid,
+    appointmentUuid: item.appointmentUuid,
+    reminderType: item.reminderType,
+    createdAt: item.createdAt,
+    targetDate: item.targetDate,
+    recommendation: item.recommendation || null,
+    doctorName: item.doctorName || null,
+    specialty: item.specialty || null,
+    clinicName: item.clinicName || null,
+    patientName: item.patientName || null,
+    url: item.url || "/appointments",
+  }));
+}
+
 export async function getUnreadNotificationCount() {
   const response = await fetch(`${API_BASE}/notifications/unread-count`, {
     headers: getAuthHeaders(),

@@ -4,6 +4,7 @@ import { Link, redirect, useLoaderData } from "react-router";
 import { postsBySlug } from "../posts/index.js";
 import { API_BASE, getToken, getUser } from "../utils/auth";
 import { canManageFavorites, getFavoritePosts } from "../utils/blog-favorites";
+import { listFollowUpReminders } from "../utils/notifications";
 
 export function clientLoader() {
   if (!getToken()) return redirect("/?login=true");
@@ -50,6 +51,161 @@ function StatusBadge({ status }) {
   };
   const { cls, label } = map[status] || { cls: "badge-neutral", label: status };
   return <span className={`badge badge-sm ${cls}`}>{label}</span>;
+}
+
+function toFollowUpTargetDate(reminder) {
+  const date = new Date(`${reminder.targetDate}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function followUpCountdown(reminder) {
+  const targetDate = toFollowUpTargetDate(reminder);
+
+  if (!targetDate) {
+    return "Date unavailable";
+  }
+
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const targetDay = new Date(
+    targetDate.getFullYear(),
+    targetDate.getMonth(),
+    targetDate.getDate(),
+  );
+  const diffDays = Math.round(
+    (targetDay.getTime() - today.getTime()) / (24 * 60 * 60 * 1000),
+  );
+
+  if (diffDays === 0) {
+    return "Today";
+  }
+
+  if (diffDays === 1) {
+    return "Tomorrow";
+  }
+
+  if (diffDays > 1) {
+    return `In ${diffDays} days`;
+  }
+
+  return `${Math.abs(diffDays)} days overdue`;
+}
+
+function formatFollowUpTargetDate(reminder) {
+  const targetDate = toFollowUpTargetDate(reminder);
+
+  if (!targetDate) {
+    return "Date unavailable";
+  }
+
+  return targetDate.toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function FollowUpRemindersDoctor() {
+  const [reminders, setReminders] = useState([]);
+  const [totalReminders, setTotalReminders] = useState(0);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function load() {
+      try {
+        const data = await listFollowUpReminders();
+
+        if (!isMounted) {
+          return;
+        }
+
+        setTotalReminders(data.length);
+        setReminders(data.slice(0, 4));
+      } catch {
+        if (!isMounted) {
+          return;
+        }
+
+        setTotalReminders(0);
+        setReminders([]);
+      }
+    }
+
+    load();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  return (
+    <div className="card bg-base-200 w-full shadow">
+      <div className="card-body p-4">
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="text-base-content/40 text-xs font-semibold tracking-widest uppercase">
+            Follow-up reminders
+          </h2>
+          {totalReminders > 0 && (
+            <span className="badge badge-neutral badge-sm">
+              {totalReminders}
+            </span>
+          )}
+        </div>
+
+        {reminders.length === 0 ? (
+          <p className="text-base-content/40 text-sm">
+            No follow-up reminders yet.
+          </p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {reminders.map((reminder) => (
+              <Link
+                key={reminder.uuid}
+                to={reminder.url}
+                className="bg-base-100 hover:bg-base-300 rounded-box flex flex-col gap-2 p-3 transition"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">
+                      {reminder.patientName || "Patient"}
+                    </p>
+                    <p className="text-base-content/60 truncate text-xs">
+                      {reminder.specialty || "Specialization unavailable"}
+                    </p>
+                  </div>
+                  <span className="badge badge-warning badge-sm">
+                    Follow-up
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between gap-3 text-xs">
+                  <span className="text-base-content/60">
+                    {formatFollowUpTargetDate(reminder)}
+                  </span>
+                  <span className="text-warning font-semibold">
+                    {followUpCountdown(reminder)}
+                  </span>
+                </div>
+
+                <p className="text-base-content/50 line-clamp-2 text-xs">
+                  {reminder.recommendation ||
+                    "Follow-up recommendation was provided for this consultation."}
+                </p>
+              </Link>
+            ))}
+          </div>
+        )}
+
+        <Link
+          to="/doctor/appointments?status=completed"
+          className="btn btn-ghost btn-sm mt-2 justify-start"
+        >
+          View completed appointments →
+        </Link>
+      </div>
+    </div>
+  );
 }
 
 function UpcomingAppointmentsDoctor({ specialization }) {
@@ -397,6 +553,8 @@ export default function DoctorProfile() {
             <UpcomingAppointmentsDoctor specialization={user.specialization} />
 
             <FavoritePostsWidget />
+
+            <FollowUpRemindersDoctor />
           </div>
         </div>
       </div>

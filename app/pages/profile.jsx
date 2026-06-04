@@ -4,7 +4,10 @@ import { Link, redirect, useLoaderData } from "react-router";
 import { postsBySlug } from "../posts/index.js";
 import { API_BASE, getToken, getUser, setAuth } from "../utils/auth";
 import { canManageFavorites, getFavoritePosts } from "../utils/blog-favorites";
-import { listReminderNotifications } from "../utils/notifications";
+import {
+  listFollowUpReminders,
+  listReminderNotifications,
+} from "../utils/notifications";
 
 const ALCOHOL_FREQUENCY_OPTIONS = [
   { value: "never", label: "Never" },
@@ -398,45 +401,39 @@ function RecentScans() {
   );
 }
 
-function UpcomingAppointments() {
-  const [appointments, setAppointments] = useState([]);
-  const [totalUpcomingAppointments, setTotalUpcomingAppointments] = useState(0);
+function FollowUpRemindersWidget() {
+  const [reminders, setReminders] = useState([]);
+  const [totalReminders, setTotalReminders] = useState(0);
 
   useEffect(() => {
+    let isMounted = true;
+
     async function load() {
       try {
-        const res = await fetch(`${API_BASE}/appointment`, {
-          headers: { Authorization: `Bearer ${getAuthToken()}` },
-        });
-        const json = await res.json();
-        if (!res.ok) return;
+        const data = await listFollowUpReminders();
 
-        const upcoming = (json.data ?? [])
-          .filter((appointment) => {
-            const date = toAppointmentDateTime(appointment);
+        if (!isMounted) {
+          return;
+        }
 
-            if (!date || Number.isNaN(date.getTime())) {
-              return false;
-            }
-
-            return (
-              date.getTime() > Date.now() && appointment.status !== "cancelled"
-            );
-          })
-          .sort(
-            (a, b) =>
-              toAppointmentDateTime(a).getTime() -
-              toAppointmentDateTime(b).getTime(),
-          );
-
-        setTotalUpcomingAppointments(upcoming.length);
-        setAppointments(upcoming.slice(0, 3));
+        setTotalReminders(data.length);
+        setReminders(data.slice(0, 4));
       } catch {
+        if (!isMounted) {
+          return;
+        }
+
+        setTotalReminders(0);
+        setReminders([]);
         // silently fail — profile should still render
       }
     }
 
     load();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return (
@@ -444,71 +441,56 @@ function UpcomingAppointments() {
       <div className="card-body p-4">
         <div className="mb-2 flex items-center justify-between">
           <h2 className="text-base-content/40 text-xs font-semibold tracking-widest uppercase">
-            Upcoming appointments
+            Follow-up reminders
           </h2>
-          {totalUpcomingAppointments > 0 && (
+          {totalReminders > 0 && (
             <span className="badge badge-neutral badge-sm">
-              {totalUpcomingAppointments}
+              {totalReminders}
             </span>
           )}
         </div>
 
-        {appointments.length === 0 ? (
+        {reminders.length === 0 ? (
           <p className="text-base-content/40 text-sm">
-            No upcoming appointments.
+            No follow-up reminders yet.
           </p>
         ) : (
-          <div className="flex flex-col gap-2">
-            {appointments.map((appointment) => (
-              <div
-                key={appointment.uuid}
-                className="flex items-center justify-between gap-2"
+          <div className="flex flex-col gap-3">
+            {reminders.map((reminder) => (
+              <Link
+                key={reminder.uuid}
+                to={reminder.url}
+                className="bg-base-100 hover:bg-base-300 rounded-box flex flex-col gap-2 p-3 transition"
               >
-                <div className="min-w-0">
-                  <p className="text-base-content/70 truncate text-xs">
-                    {appointment.doctor
-                      ? `Dr. ${appointment.doctor.lastName}`
-                      : "Assigned doctor"}
-                  </p>
-                  <p className="text-base-content/50 truncate text-xs">
-                    {appointment.doctor?.specialization ||
-                      "Specialization unavailable"}
-                  </p>
-                  {(() => {
-                    const appointmentDate = toAppointmentDateTime(appointment);
-
-                    if (
-                      !appointmentDate ||
-                      Number.isNaN(appointmentDate.getTime())
-                    ) {
-                      return (
-                        <p className="text-base-content/50 text-xs">
-                          Date unavailable
-                        </p>
-                      );
-                    }
-
-                    return (
-                      <p className="text-base-content/50 text-xs">
-                        {appointmentDate.toLocaleDateString("en-GB", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}{" "}
-                        at{" "}
-                        {appointmentDate.toLocaleTimeString("en-GB", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </p>
-                    );
-                  })()}
-                  <p className="text-base-content/50 truncate text-xs">
-                    {appointment.clinic?.name || "Clinic unavailable"}
-                  </p>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">
+                      Follow-up recommended
+                    </p>
+                    <p className="text-base-content/60 line-clamp-2 text-xs">
+                      {reminder.recommendation ||
+                        "A follow-up consultation was recommended after your completed visit."}
+                    </p>
+                  </div>
+                  <span className="badge badge-warning badge-sm">
+                    Follow-up
+                  </span>
                 </div>
-                <StatusBadge status={appointment.status} />
-              </div>
+
+                <div className="flex items-center justify-between gap-3 text-xs">
+                  <span className="text-base-content/60">
+                    {reminder.doctorName || reminder.specialty || "Doctor"}
+                  </span>
+                  <span className="text-warning font-semibold">
+                    {getReminderCountdown(reminder)}
+                  </span>
+                </div>
+
+                <p className="text-base-content/50 text-xs">
+                  {formatReminderDate(reminder)}
+                  {reminder.clinicName ? ` · ${reminder.clinicName}` : ""}
+                </p>
+              </Link>
             ))}
           </div>
         )}
@@ -517,7 +499,7 @@ function UpcomingAppointments() {
           to="/appointments"
           className="btn btn-ghost btn-sm mt-2 justify-start"
         >
-          View all appointments →
+          View follow-up options →
         </Link>
       </div>
     </div>
@@ -1308,7 +1290,7 @@ export default function Profile() {
 
             <UpcomingAppointmentsWidget />
 
-            <UpcomingAppointments />
+            <FollowUpRemindersWidget />
 
             <FavoritePostsWidget />
           </div>
