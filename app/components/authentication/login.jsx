@@ -66,7 +66,7 @@ function LoginForm() {
         <FaSignInAlt /> Welcome back
       </h2>
 
-      <form className="flex flex-1 flex-col gap-4 mt-6">
+      <form className="mt-6 flex flex-1 flex-col gap-4">
         {error && (
           <div className="alert alert-error">
             <FaExclamationTriangle />

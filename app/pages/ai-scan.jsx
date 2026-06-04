@@ -1091,7 +1091,10 @@ export default function AiScan() {
       window.clearInterval(intervalId);
       window.removeEventListener("focus", handleFocus);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener(APP_DATA_REFRESH_EVENT, handleDataRefreshEvent);
+      window.removeEventListener(
+        APP_DATA_REFRESH_EVENT,
+        handleDataRefreshEvent,
+      );
     };
   }, [fetchScans]);
 
