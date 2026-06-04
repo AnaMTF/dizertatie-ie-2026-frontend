@@ -209,7 +209,7 @@ export default function DoctorPatientProfilePage() {
             View medical history
           </Link>
           <div>
-            <h1 className="text-2xl font-bold">{fullName}</h1>
+            <h1 className="text-2xl font-bold">Patient profile</h1>
             <p className="text-base-content/50 text-sm">
               Read-only patient profile visible to doctors with an appointment
               relationship.
