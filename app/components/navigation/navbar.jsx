@@ -118,11 +118,6 @@ function PatientActions() {
         Clinics
       </Link>
 
-      <Link to="/doctors" className="btn btn-sm btn-ghost">
-        <FaStethoscope />
-        Doctors
-      </Link>
-
       <Link to="/notifications" className="indicator btn btn-sm btn-ghost">
         <FaBell />
         Notifications
@@ -246,11 +241,6 @@ function LoggedOutActions() {
       <Link to="/clinics" className="btn btn-sm btn-ghost">
         <FaHospital />
         Clinics
-      </Link>
-
-      <Link to="/doctors" className="btn btn-sm btn-ghost">
-        <FaStethoscope />
-        Doctors
       </Link>
 
       <button onClick={handleLogin} className="btn btn-sm btn-ghost">
