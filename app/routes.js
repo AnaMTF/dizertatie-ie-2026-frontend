@@ -8,6 +8,7 @@ export default [
   route("/blog/:slug", "pages/blog-post.jsx"),
   route("/clinics", "pages/clinics.jsx"),
   route("/clinics/:uuid", "pages/clinic-detail.jsx"),
+  route("/doctors", "pages/doctors.jsx"),
   route("/contact", "pages/contact.jsx"),
 
   /* Only a logged in user can access thiese routes */
