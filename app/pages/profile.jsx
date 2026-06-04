@@ -405,20 +405,25 @@ function RecentScans() {
         {scans.length === 0 ? (
           <p className="text-base-content/40 text-sm">No scans yet.</p>
         ) : (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
             {scans.map((scan) => (
               <div
                 key={scan.uuid}
-                className="flex items-center justify-between gap-2"
+                className="bg-base-100 hover:bg-base-300 rounded-box flex flex-col gap-2 p-3 transition"
               >
-                <span className="text-base-content/70 text-xs">
-                  {new Date(scan.createdAt).toLocaleDateString("en-GB", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  })}
-                </span>
-                <StatusBadge status={scan.status} />
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">Scan result</p>
+                    <p className="text-base-content/60 text-xs">
+                      {new Date(scan.createdAt).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </p>
+                  </div>
+                  <StatusBadge status={scan.status} />
+                </div>
               </div>
             ))}
           </div>
@@ -608,14 +613,19 @@ function FavoritePostsWidget() {
         ) : items.length === 0 ? (
           <p className="text-base-content/40 text-sm">No favorites yet.</p>
         ) : (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
             {items.map((item) => (
               <Link
                 key={item.slug}
                 to={`/blog/${item.slug}`}
-                className="link link-hover text-sm"
+                className="bg-base-100 hover:bg-base-300 rounded-box flex flex-col gap-2 p-3 transition"
               >
-                {item.title}
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{item.title}</p>
+                  <p className="text-base-content/60 text-xs">
+                    Saved blog article
+                  </p>
+                </div>
               </Link>
             ))}
           </div>

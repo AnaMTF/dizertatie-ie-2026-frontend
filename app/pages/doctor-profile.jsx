@@ -138,60 +138,65 @@ function UpcomingAppointmentsDoctor({ specialization }) {
             No upcoming appointments.
           </p>
         ) : (
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3">
             {appointments.map((appointment) => (
-              <div
+              <Link
                 key={appointment.uuid}
-                className="flex items-center justify-between gap-2"
+                to={`/doctor/appointments?appointment=${appointment.uuid}`}
+                className="bg-base-100 hover:bg-base-300 rounded-box flex flex-col gap-2 p-3 transition"
               >
-                <div className="min-w-0">
-                  <p className="text-base-content/70 truncate text-xs">
-                    {appointment.patient
-                      ? `${appointment.patient.firstName} ${appointment.patient.lastName}`
-                      : "Patient"}
-                  </p>
-                  <p className="text-base-content/50 truncate text-xs">
-                    {appointment.doctor?.specialization ||
-                      specialization ||
-                      "Specialization unavailable"}
-                  </p>
-                  {(() => {
-                    const appointmentDate = toAppointmentDateTime(appointment);
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">
+                      {appointment.patient
+                        ? `${appointment.patient.firstName} ${appointment.patient.lastName}`
+                        : "Patient"}
+                    </p>
+                    <p className="text-base-content/50 truncate text-xs">
+                      {appointment.doctor?.specialization ||
+                        specialization ||
+                        "Specialization unavailable"}
+                    </p>
+                  </div>
+                  <StatusBadge status={appointment.status} />
+                </div>
 
-                    if (
-                      !appointmentDate ||
-                      Number.isNaN(appointmentDate.getTime())
-                    ) {
-                      return (
-                        <p className="text-base-content/50 text-xs">
-                          Date unavailable
-                        </p>
-                      );
-                    }
+                {(() => {
+                  const appointmentDate = toAppointmentDateTime(appointment);
 
+                  if (
+                    !appointmentDate ||
+                    Number.isNaN(appointmentDate.getTime())
+                  ) {
                     return (
                       <p className="text-base-content/50 text-xs">
-                        {appointmentDate.toLocaleDateString("en-GB", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}{" "}
-                        at{" "}
-                        {appointmentDate.toLocaleTimeString("en-GB", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        Date unavailable
                       </p>
                     );
-                  })()}
-                  {clinicName[appointment.clinicUuid] && (
+                  }
+
+                  return (
                     <p className="text-base-content/50 text-xs">
-                      {clinicName[appointment.clinicUuid]}
+                      {appointmentDate.toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}{" "}
+                      at{" "}
+                      {appointmentDate.toLocaleTimeString("en-GB", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
                     </p>
-                  )}
-                </div>
-                <StatusBadge status={appointment.status} />
-              </div>
+                  );
+                })()}
+
+                {clinicName[appointment.clinicUuid] && (
+                  <p className="text-base-content/50 text-xs">
+                    {clinicName[appointment.clinicUuid]}
+                  </p>
+                )}
+              </Link>
             ))}
           </div>
         )}
