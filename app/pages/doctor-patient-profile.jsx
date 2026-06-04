@@ -202,6 +202,12 @@ export default function DoctorPatientProfilePage() {
             <FaArrowLeft />
             Back to appointments
           </Link>
+          <Link
+            to={`/doctor/history?user=${patient.uuid}`}
+            className="btn btn-primary btn-sm w-fit"
+          >
+            View medical history
+          </Link>
           <div>
             <h1 className="text-2xl font-bold">{fullName}</h1>
             <p className="text-base-content/50 text-sm">

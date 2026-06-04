@@ -107,12 +107,18 @@ function AppointmentDetailsModal({ appointment }) {
                   {appointment.patient?.email || "-"}
                 </p>
                 {appointment.patient?.uuid ? (
-                  <div className="mt-3">
+                  <div className="mt-3 flex flex-wrap gap-2">
                     <Link
                       to={`/doctor/patients/${appointment.patient.uuid}`}
                       className="btn btn-primary btn-sm"
                     >
                       View patient profile
+                    </Link>
+                    <Link
+                      to={`/doctor/history?user=${appointment.patient.uuid}`}
+                      className="btn btn-ghost btn-sm"
+                    >
+                      View medical history
                     </Link>
                   </div>
                 ) : null}
