@@ -4,10 +4,7 @@ import { Link, redirect, useLoaderData } from "react-router";
 import { postsBySlug } from "../posts/index.js";
 import { API_BASE, getToken, getUser, setAuth } from "../utils/auth";
 import { canManageFavorites, getFavoritePosts } from "../utils/blog-favorites";
-import {
-  listFollowUpReminders,
-  listReminderNotifications,
-} from "../utils/notifications";
+import { listFollowUpReminders } from "../utils/notifications";
 
 const ALCOHOL_FREQUENCY_OPTIONS = [
   { value: "never", label: "Never" },
@@ -202,56 +199,93 @@ function formatReminderDate(reminder) {
   });
 }
 
-function reminderBadgeClass(reminderKind) {
-  return reminderKind === "follow_up" ? "badge-warning" : "badge-primary";
+function formatAppointmentDate(appointment) {
+  const targetDate = toAppointmentDateTime(appointment);
+
+  if (!targetDate || Number.isNaN(targetDate.getTime())) {
+    return "Date unavailable";
+  }
+
+  return targetDate.toLocaleString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
-function reminderBadgeLabel(reminderKind) {
-  return reminderKind === "follow_up" ? "Follow-up" : "Appointment";
+function getAppointmentCountdown(appointment) {
+  const targetDate = toAppointmentDateTime(appointment);
+
+  if (!targetDate || Number.isNaN(targetDate.getTime())) {
+    return "Date unavailable";
+  }
+
+  return getReminderCountdown({ targetDateTime: targetDate.toISOString() });
+}
+
+function formatDoctorDisplayName(appointment) {
+  const firstName = appointment.doctor?.firstName || "";
+  const lastName = appointment.doctor?.lastName || "";
+  const fullName = `${firstName} ${lastName}`.trim();
+
+  if (fullName) {
+    return `Dr. ${fullName}`;
+  }
+
+  return appointment.specialty || "Assigned doctor";
 }
 
 function UpcomingAppointmentsWidget() {
-  const [reminders, setReminders] = useState([]);
-  const [totalReminders, setTotalReminders] = useState(0);
+  const [appointments, setAppointments] = useState([]);
+  const [totalAppointments, setTotalAppointments] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
 
     async function load() {
       try {
-        const result = await listReminderNotifications({ page: 1, limit: 6 });
+        const response = await fetch(`${API_BASE}/appointment`, {
+          headers: { Authorization: `Bearer ${getAuthToken()}` },
+        });
+
+        const json = await response.json().catch(() => null);
 
         if (!isMounted) {
           return;
         }
 
-        const sortedReminders = [...result.items].sort((first, second) => {
-          const firstDate =
-            toReminderTargetDate(first)?.getTime() ?? Number.MAX_SAFE_INTEGER;
-          const secondDate =
-            toReminderTargetDate(second)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+        if (!response.ok) {
+          setAppointments([]);
+          setTotalAppointments(0);
+          return;
+        }
 
-          if (firstDate === secondDate) {
-            return (
-              new Date(second.createdAt).getTime() -
-              new Date(first.createdAt).getTime()
-            );
-          }
+        const now = new Date();
+        const allAppointments = json?.data ?? [];
+        const upcomingConfirmedAppointments = allAppointments
+          .filter((appointment) => appointment.status === "confirmed")
+          .map((appointment) => ({
+            appointment,
+            dateTime: toAppointmentDateTime(appointment),
+          }))
+          .filter(
+            ({ dateTime }) =>
+              dateTime && !Number.isNaN(dateTime.getTime()) && dateTime > now,
+          )
+          .sort((first, second) => first.dateTime - second.dateTime)
+          .map(({ appointment }) => appointment);
 
-          return firstDate - secondDate;
-        });
-
-        setTotalReminders(
-          result.pagination.totalItems ?? sortedReminders.length,
-        );
-        setReminders(sortedReminders.slice(0, 4));
+        setTotalAppointments(upcomingConfirmedAppointments.length);
+        setAppointments(upcomingConfirmedAppointments.slice(0, 4));
       } catch {
         if (!isMounted) {
           return;
         }
 
-        setReminders([]);
-        setTotalReminders(0);
+        setAppointments([]);
+        setTotalAppointments(0);
       }
     }
 
@@ -269,55 +303,52 @@ function UpcomingAppointmentsWidget() {
           <h2 className="text-base-content/40 text-xs font-semibold tracking-widest uppercase">
             Upcoming appointments
           </h2>
-          {totalReminders > 0 && (
+          {totalAppointments > 0 && (
             <span className="badge badge-neutral badge-sm">
-              {totalReminders}
+              {totalAppointments}
             </span>
           )}
         </div>
 
-        {reminders.length === 0 ? (
+        {appointments.length === 0 ? (
           <p className="text-base-content/40 text-sm">
             No upcoming appointments right now.
           </p>
         ) : (
           <div className="flex flex-col gap-3">
-            {reminders.map((reminder) => (
+            {appointments.map((appointment) => (
               <Link
-                key={reminder.uuid}
-                to={reminder.url}
+                key={appointment.uuid}
+                to="/appointments"
                 className="bg-base-100 hover:bg-base-300 rounded-box flex flex-col gap-2 p-3 transition"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">
-                      {reminder.title}
+                      {formatDoctorDisplayName(appointment)}
                     </p>
                     <p className="text-base-content/60 line-clamp-2 text-xs">
-                      {reminder.body}
+                      {appointment.clinic?.name || "Clinic appointment"}
                     </p>
                   </div>
-                  <span
-                    className={`badge badge-sm ${reminderBadgeClass(reminder.reminderKind)}`}
-                  >
-                    {reminderBadgeLabel(reminder.reminderKind)}
+                  <span className="badge badge-primary badge-sm">
+                    Appointment
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between gap-3 text-xs">
                   <span className="text-base-content/60">
-                    {reminder.doctorName ||
-                      reminder.specialty ||
-                      formatReminderDate(reminder)}
+                    {appointment.specialty ||
+                      formatAppointmentDate(appointment)}
                   </span>
                   <span className="text-primary font-semibold">
-                    {getReminderCountdown(reminder)}
+                    {getAppointmentCountdown(appointment)}
                   </span>
                 </div>
 
-                {reminder.doctorName || reminder.specialty ? (
+                {appointment.specialty ? (
                   <p className="text-base-content/50 text-xs">
-                    {formatReminderDate(reminder)}
+                    {formatAppointmentDate(appointment)}
                   </p>
                 ) : null}
               </Link>
