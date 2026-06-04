@@ -402,54 +402,56 @@ export default function Blog() {
               key={post.meta.slug}
               className="card bg-base-200 hover:bg-base-300 transition-colors"
             >
-              <div className="card-body md:flex-row md:items-start md:justify-between md:gap-6">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-3">
-                    <Link
-                      to={`/blog/${post.meta.slug}`}
-                      className="card-title link-hover link"
-                    >
-                      {post.meta.title}
-                    </Link>
-                    {canFavorite && (
-                      <button
-                        type="button"
-                        className={`btn btn-ghost btn-sm btn-circle ${favoriteSlugs.has(post.meta.slug) ? "text-error" : "text-base-content/60"}`}
-                        onClick={() => handleToggleFavorite(post.meta.slug)}
-                        disabled={pendingFavoriteSlug === post.meta.slug}
-                        title={
-                          favoriteSlugs.has(post.meta.slug)
-                            ? "Remove from favorites"
-                            : "Add to favorites"
-                        }
+              <div className="card-body p-0">
+                <div className="bg-base-100 p-6 md:flex md:flex-row md:items-start md:justify-between md:gap-6">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-3">
+                      <Link
+                        to={`/blog/${post.meta.slug}`}
+                        className="card-title link-hover link"
                       >
-                        <FaHeart />
-                      </button>
-                    )}
+                        {post.meta.title}
+                      </Link>
+                      {canFavorite && (
+                        <button
+                          type="button"
+                          className={`btn btn-ghost btn-sm btn-circle ${favoriteSlugs.has(post.meta.slug) ? "text-error" : "text-base-content/60"}`}
+                          onClick={() => handleToggleFavorite(post.meta.slug)}
+                          disabled={pendingFavoriteSlug === post.meta.slug}
+                          title={
+                            favoriteSlugs.has(post.meta.slug)
+                              ? "Remove from favorites"
+                              : "Add to favorites"
+                          }
+                        >
+                          <FaHeart />
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-base-content/70">{post.meta.summary}</p>
+                    <p className="text-base-content/50 mt-1 text-sm">
+                      {new Date(post.meta.publishedAt).toLocaleDateString(
+                        "en-GB",
+                        {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        },
+                      )}
+                    </p>
                   </div>
-                  <p className="text-base-content/70">{post.meta.summary}</p>
-                  <p className="text-base-content/50 mt-1 text-sm">
-                    {new Date(post.meta.publishedAt).toLocaleDateString(
-                      "en-GB",
-                      {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      },
-                    )}
-                  </p>
-                </div>
 
-                <img
-                  src={imagePath}
-                  alt={`Image for ${post.meta.title}`}
-                  className="mt-2 h-28 w-full rounded-xl object-cover md:mt-0 md:w-48"
-                  loading="lazy"
-                  onError={(event) => {
-                    event.currentTarget.onerror = null;
-                    event.currentTarget.src = BLOG_IMAGE_FALLBACK_PATH;
-                  }}
-                />
+                  <img
+                    src={imagePath}
+                    alt={`Image for ${post.meta.title}`}
+                    className="mt-2 h-28 w-full rounded-xl object-cover md:mt-0 md:w-48"
+                    loading="lazy"
+                    onError={(event) => {
+                      event.currentTarget.onerror = null;
+                      event.currentTarget.src = BLOG_IMAGE_FALLBACK_PATH;
+                    }}
+                  />
+                </div>
               </div>
             </div>
           ))}
