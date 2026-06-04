@@ -207,7 +207,7 @@ function reminderBadgeLabel(reminderKind) {
   return reminderKind === "follow_up" ? "Follow-up" : "Appointment";
 }
 
-function RemindersWidget() {
+function UpcomingAppointmentsWidget() {
   const [reminders, setReminders] = useState([]);
   const [totalReminders, setTotalReminders] = useState(0);
 
@@ -264,7 +264,7 @@ function RemindersWidget() {
       <div className="card-body p-4">
         <div className="mb-2 flex items-center justify-between">
           <h2 className="text-base-content/40 text-xs font-semibold tracking-widest uppercase">
-            Reminders
+            Upcoming appointments
           </h2>
           {totalReminders > 0 && (
             <span className="badge badge-neutral badge-sm">
@@ -275,7 +275,7 @@ function RemindersWidget() {
 
         {reminders.length === 0 ? (
           <p className="text-base-content/40 text-sm">
-            No reminders right now.
+            No upcoming appointments right now.
           </p>
         ) : (
           <div className="flex flex-col gap-3">
@@ -326,7 +326,7 @@ function RemindersWidget() {
           to="/notifications"
           className="btn btn-ghost btn-sm mt-2 justify-start"
         >
-          View all reminders →
+          View all upcoming appointments →
         </Link>
       </div>
     </div>
@@ -1306,7 +1306,7 @@ export default function Profile() {
           <div className="flex w-full flex-col gap-4">
             <RecentScans />
 
-            <RemindersWidget />
+            <UpcomingAppointmentsWidget />
 
             <UpcomingAppointments />
 
