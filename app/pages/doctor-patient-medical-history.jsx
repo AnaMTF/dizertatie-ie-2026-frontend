@@ -276,7 +276,9 @@ export default function DoctorPatientMedicalHistoryPage() {
                             Follow-up date
                           </p>
                           <p className="text-sm font-medium">
-                            {formatDateLabel(appointment.doctorFollowUpDate)}
+                            {formatDateLabel(
+                              appointment.followUpReminder?.doctorFollowUpDate,
+                            )}
                           </p>
                         </div>
                         <div className="bg-base-200 rounded-box p-3">
@@ -318,7 +320,7 @@ export default function DoctorPatientMedicalHistoryPage() {
                           Follow-up recommendation
                         </p>
                         <p className="mt-1 text-sm whitespace-pre-wrap">
-                          {appointment.doctorFollowUpRecommendation?.trim() ||
+                          {appointment.followUpReminder?.doctorFollowUpRecommendation?.trim() ||
                             "Not provided."}
                         </p>
                       </div>

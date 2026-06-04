@@ -37,8 +37,10 @@ export default function DoctorUpdateAppointmentModal({
 
     setDiagnosis(appointment.doctorDiagnosis || "");
     setPrescription(appointment.doctorPrescription || "");
-    setFollowUpRecommendation(appointment.doctorFollowUpRecommendation || "");
-    setFollowUpDate(appointment.doctorFollowUpDate || "");
+    setFollowUpRecommendation(
+      appointment.followUpReminder?.doctorFollowUpRecommendation || "",
+    );
+    setFollowUpDate(appointment.followUpReminder?.doctorFollowUpDate || "");
     setError("");
   }, [appointment]);
 

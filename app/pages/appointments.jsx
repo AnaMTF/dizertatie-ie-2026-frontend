@@ -161,7 +161,7 @@ function AppointmentDetailsModal({ appointment, onBookFollowUp }) {
                       Follow-up recommendation
                     </p>
                     <p className="text-sm whitespace-pre-wrap">
-                      {appointment.doctorFollowUpRecommendation?.trim() ||
+                      {appointment.followUpReminder?.doctorFollowUpRecommendation?.trim() ||
                         "Not available yet."}
                     </p>
                   </div>
@@ -170,10 +170,11 @@ function AppointmentDetailsModal({ appointment, onBookFollowUp }) {
                       Follow-up date
                     </p>
                     <p className="text-sm">
-                      {appointment.doctorFollowUpDate || "Not set."}
+                      {appointment.followUpReminder?.doctorFollowUpDate ||
+                        "Not set."}
                     </p>
                   </div>
-                  {appointment.doctorFollowUpDate &&
+                  {appointment.followUpReminder?.doctorFollowUpDate &&
                   appointment.doctor?.uuid ? (
                     <button
                       type="button"
@@ -637,7 +638,10 @@ export default function Appointments() {
       window.clearInterval(intervalId);
       window.removeEventListener("focus", handleFocus);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener(APP_DATA_REFRESH_EVENT, handleDataRefreshEvent);
+      window.removeEventListener(
+        APP_DATA_REFRESH_EVENT,
+        handleDataRefreshEvent,
+      );
     };
   }, [loadAppointments]);
 
@@ -735,7 +739,7 @@ export default function Appointments() {
     const doctorUuid = appointment.doctor?.uuid;
     const clinicUuid =
       appointment.clinic?.uuid || appointment.doctor?.clinicUuid;
-    const followUpDate = appointment.doctorFollowUpDate;
+    const followUpDate = appointment.followUpReminder?.doctorFollowUpDate;
 
     if (!doctorUuid || !clinicUuid || !followUpDate) {
       return;

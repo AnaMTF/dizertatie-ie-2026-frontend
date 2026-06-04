@@ -181,7 +181,7 @@ function AppointmentDetailsModal({ appointment }) {
                       Follow-up recommendation
                     </p>
                     <p className="text-sm whitespace-pre-wrap">
-                      {appointment.doctorFollowUpRecommendation?.trim() ||
+                      {appointment.followUpReminder?.doctorFollowUpRecommendation?.trim() ||
                         "Not provided."}
                     </p>
                   </div>
@@ -190,7 +190,8 @@ function AppointmentDetailsModal({ appointment }) {
                       Follow-up date
                     </p>
                     <p className="text-sm">
-                      {appointment.doctorFollowUpDate || "Not set."}
+                      {appointment.followUpReminder?.doctorFollowUpDate ||
+                        "Not set."}
                     </p>
                   </div>
                 </div>
