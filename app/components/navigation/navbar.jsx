@@ -194,16 +194,6 @@ function DoctorActions() {
         )}
       </Link>
 
-      <Link to="/blog" className="btn btn-sm btn-ghost">
-        <FaNewspaper />
-        Blog
-      </Link>
-
-      <Link to="/clinics" className="btn btn-sm btn-ghost">
-        <FaHospital />
-        Clinics
-      </Link>
-
       <Link to="/doctor/profile" className="btn btn-sm btn-ghost">
         <FaUserCircle />
         Profile
