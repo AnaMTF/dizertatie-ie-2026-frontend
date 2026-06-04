@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { FaCalendarCheck, FaExclamationCircle, FaSearch } from "react-icons/fa";
 import { Link, redirect, useLoaderData } from "react-router";
-import { postsBySlug } from "../posts/index.js";
 import { API_BASE, getToken, getUser } from "../utils/auth";
-import { canManageFavorites, getFavoritePosts } from "../utils/blog-favorites";
 import { listFollowUpReminders } from "../utils/notifications";
 
 export function clientLoader() {
@@ -365,101 +363,6 @@ function UpcomingAppointmentsDoctor({ specialization }) {
   );
 }
 
-function FavoritePostsWidget() {
-  const [items, setItems] = useState([]);
-  const [totalFavorites, setTotalFavorites] = useState(0);
-  const [error, setError] = useState(null);
-  const canFavorite = canManageFavorites();
-
-  useEffect(() => {
-    if (!canFavorite) {
-      setItems([]);
-      setTotalFavorites(0);
-      setError(null);
-      return;
-    }
-
-    let isMounted = true;
-
-    getFavoritePosts({ page: 1, limit: 5 }).then((result) => {
-      if (!isMounted) {
-        return;
-      }
-
-      if (result.error) {
-        setError(result.error);
-        setTotalFavorites(0);
-        return;
-      }
-
-      setTotalFavorites(result.pagination?.totalItems ?? result.data.length);
-
-      setItems(
-        result.data
-          .map((item) => {
-            const post = postsBySlug[item.postSlug];
-
-            if (!post) {
-              return null;
-            }
-
-            return {
-              slug: item.postSlug,
-              title: post.meta.title,
-            };
-          })
-          .filter(Boolean),
-      );
-    });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [canFavorite]);
-
-  return (
-    <div className="card bg-base-200 w-full shadow">
-      <div className="card-body p-4">
-        <div className="mb-2 flex items-center justify-between">
-          <h2 className="text-base-content/40 text-xs font-semibold tracking-widest uppercase">
-            Favorite articles
-          </h2>
-          {totalFavorites > 0 && (
-            <span className="badge badge-neutral badge-sm">
-              {totalFavorites}
-            </span>
-          )}
-        </div>
-
-        {error ? (
-          <p className="text-error text-sm">{error}</p>
-        ) : items.length === 0 ? (
-          <p className="text-base-content/40 text-sm">No favorites yet.</p>
-        ) : (
-          <div className="flex flex-col gap-2">
-            {items.map((item) => (
-              <Link
-                key={item.slug}
-                to={`/blog/${item.slug}`}
-                className="link link-hover text-sm"
-              >
-                {item.title}
-              </Link>
-            ))}
-          </div>
-        )}
-
-        <Link
-          to="/blog?favorites=1"
-          className="btn btn-ghost btn-sm mt-2 justify-start"
-        >
-          View all favorites →
-        </Link>
-      </div>
-    </div>
-  );
-}
-
 export default function DoctorProfile() {
   const { user } = useLoaderData();
   const [clinicName, setClinicName] = useState(null);
@@ -551,8 +454,6 @@ export default function DoctorProfile() {
 
           <div className="flex w-full flex-col gap-4">
             <UpcomingAppointmentsDoctor specialization={user.specialization} />
-
-            <FavoritePostsWidget />
 
             <FollowUpRemindersDoctor />
           </div>
