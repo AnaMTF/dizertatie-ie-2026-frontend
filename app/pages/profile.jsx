@@ -1304,16 +1304,6 @@ export default function Profile() {
           </div>
 
           <div className="flex w-full flex-col gap-4">
-            <div className="card bg-base-200 shadow">
-              <div className="card-body p-4">
-                <h2 className="card-title text-sm">Appointment insights</h2>
-                <p className="text-base-content/60 text-sm">
-                  Upcoming appointments and recent scans are synced from backend
-                  data.
-                </p>
-              </div>
-            </div>
-
             <RecentScans />
 
             <RemindersWidget />
