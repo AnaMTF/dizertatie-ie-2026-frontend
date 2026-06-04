@@ -151,44 +151,48 @@ export default function BlogPost() {
 
   return (
     <div className="px-9 pt-6 pb-10">
-      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
-        <div>
-          <div className="mb-6 flex items-center justify-between gap-3">
-            <Link to="/blog" className="link link-primary block text-sm">
-              ← Back to Blog
-            </Link>
+      <div className="rounded-box bg-base-200 mx-auto w-full max-w-5xl p-3 md:p-4">
+        <div className="rounded-box bg-base-100 flex flex-col gap-6 p-6 shadow-sm md:p-8">
+          <div>
+            <div className="mb-6 flex items-center justify-between gap-3">
+              <Link to="/blog" className="link link-primary block text-sm">
+                ← Back to Blog
+              </Link>
 
-            {canFavorite && (
-              <button
-                type="button"
-                className={`btn btn-sm ${isFavorited ? "btn-error" : "btn-outline"}`}
-                onClick={handleToggleFavorite}
-                disabled={favoriteLoading}
-              >
-                <FaHeart />
-                {isFavorited ? "Favorited" : "Add to favorites"}
-              </button>
+              {canFavorite && (
+                <button
+                  type="button"
+                  className={`btn btn-sm ${isFavorited ? "btn-error" : "btn-outline"}`}
+                  onClick={handleToggleFavorite}
+                  disabled={favoriteLoading}
+                >
+                  <FaHeart />
+                  {isFavorited ? "Favorited" : "Add to favorites"}
+                </button>
+              )}
+            </div>
+
+            <h1 className="mb-2 text-4xl font-bold">{post.meta.title}</h1>
+            <p className="text-base-content/50 text-sm">
+              {new Date(post.meta.publishedAt).toLocaleDateString("en-GB", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+            </p>
+            {favoriteError && (
+              <p className="text-error mt-2 text-sm">{favoriteError}</p>
             )}
           </div>
 
-          <h1 className="mb-2 text-4xl font-bold">{post.meta.title}</h1>
-          <p className="text-base-content/50 text-sm">
-            {new Date(post.meta.publishedAt).toLocaleDateString("en-GB", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-          </p>
-          {favoriteError && (
-            <p className="text-error mt-2 text-sm">{favoriteError}</p>
-          )}
-        </div>
+          <div className="prose max-w-none">
+            <PostContent />
+          </div>
 
-        <div className="prose max-w-none">
-          <PostContent />
+          <BlogPostAppointmentCta
+            relatedSpecialties={post.relatedSpecialties}
+          />
         </div>
-
-        <BlogPostAppointmentCta relatedSpecialties={post.relatedSpecialties} />
       </div>
     </div>
   );
