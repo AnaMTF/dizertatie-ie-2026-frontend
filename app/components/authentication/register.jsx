@@ -368,11 +368,15 @@ function StepAdditionalInfo({
   error,
   loading,
 }) {
-  const isValid =
-    ["yes", "no"].includes(values.smoker) &&
+  const smokerProvided = values.smoker !== "";
+  const alcoholFrequencyProvided = values.alcoholConsumptionFrequency !== "";
+  const smokerValid = !smokerProvided || ["yes", "no"].includes(values.smoker);
+  const alcoholFrequencyValid =
+    !alcoholFrequencyProvided ||
     ALCOHOL_FREQUENCY_OPTIONS.some(
       (option) => option.value === values.alcoholConsumptionFrequency,
     );
+  const isValid = smokerValid && alcoholFrequencyValid;
 
   return (
     <form className="flex h-full flex-col gap-4">
@@ -436,7 +440,7 @@ function StepAdditionalInfo({
         onBack={onBack}
         nextLabel={loading ? "Creating..." : "Create Account"}
         disabled={loading || !isValid}
-        tooltipMessage="Please answer the smoking and alcohol questions to continue"
+        tooltipMessage="Please choose valid options if you fill smoking or alcohol information"
       />
     </form>
   );
