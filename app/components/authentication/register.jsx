@@ -377,6 +377,7 @@ function StepAdditionalInfo({
       (option) => option.value === values.alcoholConsumptionFrequency,
     );
   const isValid = smokerValid && alcoholFrequencyValid;
+  const isSubmitDisabled = loading || !isValid;
 
   return (
     <form className="flex h-full flex-col gap-4">
@@ -439,8 +440,12 @@ function StepAdditionalInfo({
         onNext={onSubmit}
         onBack={onBack}
         nextLabel={loading ? "Creating..." : "Create Account"}
-        disabled={loading || !isValid}
-        tooltipMessage="Please choose valid options if you fill smoking or alcohol information"
+        disabled={isSubmitDisabled}
+        tooltipMessage={
+          !isValid
+            ? "Please choose valid options if you fill smoking or alcohol information"
+            : undefined
+        }
       />
     </form>
   );
