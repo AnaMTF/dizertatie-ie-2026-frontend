@@ -681,23 +681,43 @@ export default function Appointments() {
       return;
     }
 
-    const specialty = searchParams.get("specialty")?.trim() || "";
-    const clinicUuid = searchParams.get("clinic")?.trim() || "";
+    const specialty =
+      searchParams.get("specialty")?.trim() ||
+      searchParams.get("speciality")?.trim() ||
+      "";
+    const doctorUuid = searchParams.get("doctorUuid")?.trim() || "";
+    const clinicUuid =
+      searchParams.get("clinicUuid")?.trim() ||
+      searchParams.get("clinic")?.trim() ||
+      "";
+    const date =
+      searchParams.get("date")?.trim() ||
+      searchParams.get("targetDate")?.trim() ||
+      "";
     const scanUuid = searchParams.get("scanUuid")?.trim() || "";
     const draft = {
       seed: Date.now(),
       ...(specialty ? { specialty } : {}),
+      ...(doctorUuid ? { doctorUuid } : {}),
       ...(clinicUuid ? { clinicUuid } : {}),
+      ...(date ? { date } : {}),
       ...(scanUuid ? { scanUuid } : {}),
     };
 
-    openCreateModal(specialty || clinicUuid || scanUuid ? draft : null);
+    openCreateModal(
+      specialty || doctorUuid || clinicUuid || date || scanUuid ? draft : null,
+    );
 
     setSearchParams((previous) => {
       const next = Object.fromEntries(previous);
       delete next.create;
       delete next.specialty;
+      delete next.speciality;
+      delete next.doctorUuid;
+      delete next.clinicUuid;
       delete next.clinic;
+      delete next.date;
+      delete next.targetDate;
       delete next.scanUuid;
       return next;
     });

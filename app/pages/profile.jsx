@@ -319,7 +319,7 @@ function UpcomingAppointmentsWidget() {
             {appointments.map((appointment) => (
               <Link
                 key={appointment.uuid}
-                to="/appointments"
+                to={`/appointments?appointment=${encodeURIComponent(appointment.uuid)}`}
                 className="bg-base-100 hover:bg-base-300 rounded-box flex flex-col gap-2 p-3 transition"
               >
                 <div className="flex items-start justify-between gap-2">
